@@ -4,14 +4,14 @@ export interface Product {
     price: number;
     stock: number
 }
+
+export type CreateProductPayload = Omit<Product, 'id'>
+export type UpdateProductPayload = Partial<Omit<Product, 'id'>>
   
 export interface Category {
-    id: string;
-    name: string;
-    description?: string;
-    createdAt: Date;
-    updatedAt: Date;
-}
+    id: number
+    name: string
+  }  
 
 export interface Stock {
     id: string;

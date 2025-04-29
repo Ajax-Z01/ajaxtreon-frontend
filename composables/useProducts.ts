@@ -1,10 +1,27 @@
-import type { Product } from '~/types/Inventory'
+import type { Product, CreateProductPayload, UpdateProductPayload } from '~/types/Inventory'
 
 export const useProducts = () => {
   const baseUrl = useRuntimeConfig().public.apiBaseUrl
 
-  const getProducts = async () => {
-    const { data, error } = await useFetch<Product[]>(`${baseUrl}/product`, { method: 'GET' })
+  const authToken = useCookie<string | null>('authToken')
+
+  const getHeaders = () => {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json'
+    }
+
+    if (authToken.value) {
+      headers['Authorization'] = `Bearer ${authToken.value}`
+    }
+
+    return headers
+  }
+
+  const getProducts = async (): Promise<Product[]> => {
+    const { data, error } = await useFetch<Product[]>(`${baseUrl}/product`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
 
     if (error.value) {
       throw createError({ statusCode: 500, message: 'Failed to fetch products' })
@@ -13,21 +30,25 @@ export const useProducts = () => {
     return data.value || []
   }
 
-  const addProduct = async (product: { name: string; price: number; stock: number }) => {
-    const { error } = await useFetch(`${baseUrl}/product`, {
+  const addProduct = async (product: CreateProductPayload): Promise<string> => {
+    const { data, error } = await useFetch<{ id: string }>(`${baseUrl}/product`, {
       method: 'POST',
       body: product,
+      headers: getHeaders(),
     })
 
     if (error.value) {
       throw createError({ statusCode: 500, message: 'Failed to add product' })
     }
+
+    return data.value?.id || ''
   }
 
-  const updateProduct = async (id: string, update: Partial<{ name: string; price: number; stock: number }>) => {
+  const updateProduct = async (id: string, update: UpdateProductPayload): Promise<void> => {
     const { error } = await useFetch(`${baseUrl}/product/${id}`, {
       method: 'PUT',
       body: update,
+      headers: getHeaders(),
     })
 
     if (error.value) {
@@ -35,9 +56,10 @@ export const useProducts = () => {
     }
   }
 
-  const deleteProduct = async (id: string) => {
+  const deleteProduct = async (id: string): Promise<void> => {
     const { error } = await useFetch(`${baseUrl}/product/${id}`, {
       method: 'DELETE',
+      headers: getHeaders(),
     })
 
     if (error.value) {
@@ -45,5 +67,10 @@ export const useProducts = () => {
     }
   }
 
-  return { getProducts, addProduct, updateProduct, deleteProduct }
+  return {
+    getProducts,
+    addProduct,
+    updateProduct,
+    deleteProduct
+  }
 }

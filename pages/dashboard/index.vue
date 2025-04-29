@@ -1,72 +1,63 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { collection, getDocs, getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import type { Product, Category } from '~/types/Inventory'; // Type-only import
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import type { Product } from '~/types/Inventory'
+import { useAuth } from '~/composables/useAuth'
+import { useProducts } from '~/composables/useProducts'
+import { useCategories } from '~/composables/useCategories'
 
-const router = useRouter();
-const db = getFirestore();
-const auth = getAuth();
+const router = useRouter()
+const auth = getAuth()
+const { logout } = useAuth()
 
 const stats = ref([
   { label: 'Products', value: 0 },
   { label: 'Categories', value: 0 }
-]);
+])
 
-const recentProducts = ref<Product[]>([]); // Set type Product
-const user = ref<{ email: string | null, uid: string | null } | null>(null);
+const recentProducts = ref<Product[]>([])
+const user = ref<{ email: string | null, uid: string | null } | null>(null)
 
-const fetchUser = async () => {
-  const authUser = auth.currentUser;
-  if (authUser) {
-    user.value = {
-      email: authUser.email,
-      uid: authUser.uid
-    };
-  } else {
-    router.push('/auth/login');
-  }
-};
+const { getProducts } = useProducts()
+const { getCategories } = useCategories()
 
 const fetchStats = async () => {
   try {
-    const productsSnapshot = await getDocs(collection(db, 'products'));
-    const productsData: Product[] = productsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().name ?? '', // Add the 'name' field if it's missing
-      categoryId: doc.data().categoryId ?? '', // Add the 'categoryId' field if it's missing
-      price: doc.data().price ?? 0, // Ensure price is a number
-      quantity: doc.data().quantity ?? 0, // Ensure quantity is a number
-      createdAt: doc.data().createdAt.toDate(), // Convert Firestore timestamp to Date
-      updatedAt: doc.data().updatedAt.toDate() // Convert Firestore timestamp to Date
-    }));
+    const products = await getProducts()
+    stats.value[0].value = products.length
+    recentProducts.value = products.slice(0, 5)
 
-    stats.value[0].value = productsSnapshot.size;
-    recentProducts.value = productsData.slice(0, 5); // Ambil 5 produk pertama
-
-    const categoriesSnapshot = await getDocs(collection(db, 'categories'));
-    const categoriesData: Category[] = categoriesSnapshot.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().name ?? '', // Add the 'name' field if it's missing
-      createdAt: doc.data().createdAt.toDate(),
-      updatedAt: doc.data().updatedAt.toDate()
-    }));
-
-    stats.value[1].value = categoriesSnapshot.size;
-
-    console.log('Products:', productsData);
-    console.log('Categories:', categoriesData);
+    const categories = await getCategories()
+    stats.value[1].value = categories.length
   } catch (error) {
-    console.error('Error fetching stats:', error);
+    console.error('Error fetching stats:', error)
   }
-};
+}
 
-onMounted(async () => {
-  await fetchUser();
-  await fetchStats();
-});
+const logoutUser = async () => {
+  await logout()
+  router.push('/auth/login')
+}
+
+const goToProducts = () => router.push('/products')
+const goToCategories = () => router.push('/categories')
+
+onMounted(() => {
+  onAuthStateChanged(auth, async (authUser) => {
+    if (authUser) {
+      user.value = {
+        email: authUser.email,
+        uid: authUser.uid
+      }
+      await fetchStats()
+    } else {
+      router.push('/auth/login')
+    }
+  })
+})
 </script>
+
 
 
 <template>
@@ -100,17 +91,23 @@ onMounted(async () => {
     <!-- Aksi Navigasi -->
     <div class="flex space-x-4">
       <button
-        @click="$router.push('/products')"
+        @click="goToProducts"
         class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition"
       >
         Manage Products
       </button>
       <button
-        @click="$router.push('/categories')"
+        @click="goToCategories"
         class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition"
       >
         Manage Categories
       </button>
     </div>
+    <button
+      @click="logoutUser"
+      class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition"
+    >
+      Logout
+    </button>
   </div>
 </template>
