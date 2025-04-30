@@ -6,6 +6,7 @@ import type { Product } from '~/types/Inventory'
 import { useAuth } from '~/composables/useAuth'
 import { useProducts } from '~/composables/useProducts'
 import { useCategories } from '~/composables/useCategories'
+import { useOrders } from '~/composables/useOrders'
 
 const router = useRouter()
 const auth = getAuth()
@@ -13,7 +14,8 @@ const { logout } = useAuth()
 
 const stats = ref([
   { label: 'Products', value: 0 },
-  { label: 'Categories', value: 0 }
+  { label: 'Categories', value: 0 },
+  { label: 'Orders', value: 0 }
 ])
 
 const recentProducts = ref<Product[]>([])
@@ -21,15 +23,19 @@ const user = ref<{ email: string | null, uid: string | null } | null>(null)
 
 const { getProducts } = useProducts()
 const { getCategories } = useCategories()
+const { getOrders } = useOrders()
 
 const fetchStats = async () => {
   try {
-    const products = await getProducts()
+    const products = (await getProducts()) || []
     stats.value[0].value = products.length
     recentProducts.value = products.slice(0, 5)
 
-    const categories = await getCategories()
+    const categories = (await getCategories()) || []
     stats.value[1].value = categories.length
+
+    const orders = (await getOrders()) || []
+    stats.value[2].value = orders.length
   } catch (error) {
     console.error('Error fetching stats:', error)
   }
@@ -42,6 +48,7 @@ const logoutUser = async () => {
 
 const goToProducts = () => router.push('/products')
 const goToCategories = () => router.push('/categories')
+const goToOrders = () => router.push('/orders') // Add navigation to Orders
 
 onMounted(() => {
   onAuthStateChanged(auth, async (authUser) => {
@@ -58,38 +65,55 @@ onMounted(() => {
 })
 </script>
 
-
-
 <template>
-  <div class="p-8 bg-gray-100 min-h-screen">
-    <h1 class="text-3xl font-bold mb-6">Welcome back, {{ user?.email }}!</h1>
+  <div class="p-8 bg-gray-100 min-h-screen space-y-8">
+    <div class="flex items-center justify-between flex-wrap">
+      <h1 class="text-3xl font-bold mb-2">Welcome back, {{ user?.email }}!</h1>
+      <button
+        @click="logoutUser"
+        class="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition"
+      >
+        Logout
+      </button>
+    </div>
 
     <!-- Statistik -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <div v-for="stat in stats" :key="stat.label" class="bg-white p-6 rounded-lg shadow text-center">
-        <div class="text-5xl font-bold text-blue-600">{{ stat.value }}</div>
-        <div class="mt-2 text-gray-500">{{ stat.label }}</div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div
+        v-for="stat in stats"
+        :key="stat.label"
+        class="bg-white p-6 rounded-lg shadow text-center border border-gray-200"
+      >
+        <div class="text-4xl font-extrabold text-blue-600">{{ stat.value }}</div>
+        <div class="mt-1 text-gray-700 text-lg font-medium">{{ stat.label }}</div>
       </div>
     </div>
 
-    <!-- Produk Terbaru -->
-    <div class="bg-white p-6 rounded-lg shadow mb-8">
-      <h2 class="text-xl font-semibold mb-4">Recent Products</h2>
+    <!-- Recent Products -->
+    <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
+      <h2 class="text-xl font-semibold mb-4 text-gray-800">Recent Products</h2>
       <div v-if="recentProducts.length > 0">
-        <ul class="divide-y">
-          <li v-for="product in recentProducts" :key="product.id" class="py-2">
-            <div class="flex justify-between">
-              <span class="font-medium">{{ product.name }}</span>
-              <span class="text-gray-400 text-sm">${{ product.price }}</span>
+        <ul class="divide-y divide-gray-200">
+          <li
+            v-for="product in recentProducts"
+            :key="product.id"
+            class="py-3 flex justify-between items-center"
+          >
+            <div>
+              <div class="font-medium text-gray-900">{{ product.name }}</div>
+              <div class="text-sm text-gray-500">#{{ product.id }}</div>
+            </div>
+            <div class="bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full">
+              ${{ product.price }}
             </div>
           </li>
         </ul>
       </div>
-      <div v-else class="text-gray-400">No products available.</div>
+      <div v-else class="text-gray-400 text-center py-4">No products available.</div>
     </div>
 
-    <!-- Aksi Navigasi -->
-    <div class="flex space-x-4">
+    <!-- Navigasi Aksi -->
+    <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
       <button
         @click="goToProducts"
         class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition"
@@ -102,12 +126,12 @@ onMounted(() => {
       >
         Manage Categories
       </button>
+      <button
+        @click="goToOrders"
+        class="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition"
+      >
+        Manage Orders
+      </button>
     </div>
-    <button
-      @click="logoutUser"
-      class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition"
-    >
-      Logout
-    </button>
   </div>
 </template>

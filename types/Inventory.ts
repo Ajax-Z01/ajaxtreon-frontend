@@ -1,8 +1,9 @@
 export interface Product {
-    id: string;
-    name: string; 
-    price: number;
+    id: string
+    name: string
+    price: number
     stock: number
+    categoryId: string
 }
 
 export type CreateProductPayload = Omit<Product, 'id'>
@@ -14,10 +15,29 @@ export interface Category {
   }  
 
 export interface Stock {
-    id: string;
-    productId: string;
-    quantity: number;
-    createdAt: Date;
-    updatedAt: Date;
+    id: string
+    productId: string
+    quantity: number
+    createdAt: Date
+    updatedAt: Date
 }
 
+export type OrderStatus = 'pending' | 'completed' | 'cancelled'
+
+export type Order = {
+    id: string
+    customerId: string
+    productId: string
+    quantity: number
+    status: OrderStatus
+    createdAt: string
+}
+  
+export type CreateOrderPayload = {
+    customerId: string
+    productId: string
+    quantity: number
+    status: OrderStatus
+}
+
+export type UpdateOrderPayload = Partial<CreateOrderPayload>
