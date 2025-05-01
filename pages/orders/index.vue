@@ -2,12 +2,14 @@
 import { ref, computed } from 'vue'
 import { useOrders } from '~/composables/useOrders'
 import { useProducts } from '~/composables/useProducts'
-import type { Order, Product } from '~/types/Inventory'
+import type { Order, Product, OrderStatus } from '~/types/Inventory'
 
 const { getOrders, addOrder, updateOrder, deleteOrder } = useOrders()
-const { data: orders, pending: loading, refresh } = await useAsyncData<Order[]>('orders', () => getOrders())
+const { data: orders = ref([]), pending: loading, refresh } = await useAsyncData<Order[]>('orders', () => getOrders())
 const { getProducts } = useProducts()
-const { data: products } = await useAsyncData<Product[]>('products', () => getProducts())
+const { data: products } = await useAsyncData<Product[]>('products', () => getProducts(), {
+  default: () => []
+})
 
 const isFormOpen = ref(false)
 const isEditing = ref(false)
@@ -15,13 +17,25 @@ const formTitle = ref('Add New Order')
 const selectedOrderId = ref<string | null>(null)
 
 // Form data
-const form = ref({
+const form = ref<{
+  customerId: string
+  productId: string
+  quantity: number
+  status: OrderStatus
+}>({
   customerId: '',
   productId: '',
   quantity: 1,
-  totalPrice: 0,
   status: 'pending'
 })
+
+const selectedProduct = computed(() =>
+  products.value.find(p => p.id === form.value.productId)
+)
+
+const computedTotalPrice = computed(() =>
+  selectedProduct.value?.price ? selectedProduct.value.price * form.value.quantity : 0
+)
 
 // Open form for adding
 const openAddForm = () => {
@@ -30,7 +44,6 @@ const openAddForm = () => {
     customerId: '',
     productId: '',
     quantity: 1,
-    totalPrice: 0,
     status: 'pending'
   }
   isEditing.value = false
@@ -44,7 +57,6 @@ const openEditForm = (order: Order) => {
     customerId: order.customerId,
     productId: order.productId,
     quantity: order.quantity,
-    totalPrice: order.totalPrice,
     status: order.status || 'pending'
   }
   selectedOrderId.value = order.id
@@ -81,6 +93,11 @@ const getProductNameById = (productId: string) => {
   const product = products.value.find(p => p.id === productId)
   return product ? product.name : 'Unknown Product'
 }
+
+const getProductTotal = (order: Order) => {
+  const product = products.value.find(p => p.id === order.productId)
+  return product ? (product.price * order.quantity).toFixed(2) : '0.00'
+}
 </script>
 
 <template>
@@ -98,7 +115,7 @@ const getProductNameById = (productId: string) => {
     <div v-if="loading" class="text-gray-500">Loading...</div>
 
     <!-- No Orders State -->
-    <div v-else-if="orders.length === 0" class="text-gray-500">No orders available.</div>
+    <div v-else-if="!orders || orders.length === 0" class="text-gray-500">No orders available.</div>
 
     <!-- Orders List -->
     <div v-else>
@@ -107,7 +124,7 @@ const getProductNameById = (productId: string) => {
           <div class="text-lg font-semibold">Order for: {{ getProductNameById(order.productId) }}</div>
           <div class="flex items-center gap-4">
             <div><strong>Qty:</strong> {{ order.quantity }}</div>
-            <div><strong>Total:</strong> ${{ order.totalPrice }}</div>
+            <div><strong>Total:</strong> ${{ getProductTotal(order) }}</div>
             <div><strong>Status:</strong> {{ order.status }}</div>
           </div>
           <div class="flex gap-2">
@@ -155,7 +172,7 @@ const getProductNameById = (productId: string) => {
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Total Price</label>
-            <input v-model.number="form.totalPrice" type="number" step="0.01" class="w-full border rounded px-3 py-2" required />
+            <input :value="computedTotalPrice" readonly class="w-full border rounded px-3 py-2 bg-gray-100" />
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Status</label>

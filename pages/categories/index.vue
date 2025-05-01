@@ -5,9 +5,13 @@ import type { Category } from '~/types/Inventory'
 
 const { getCategories, addCategory, deleteCategory, updateCategory } = useCategories()
 
-const { data: categories, pending: loading, refresh } = await useAsyncData<Category[]>('categories', () => getCategories())
+const { data: categories, pending: loading, refresh } = await useAsyncData<Category[]>('categories', () => getCategories(), {
+  default: () => [],
+})
 
 const newCategoryName = ref('')
+const editingCategoryId = ref<number | null>(null)
+const editedCategoryName = ref('')
 
 // Add new category
 const addNewCategory = async (event: Event) => {
@@ -34,9 +38,35 @@ const deleteCategoryHandler = async (id: number) => {
   }
 }
 
-// Placeholder for edit
-const editCategory = (category: Category) => {
-  console.log('Editing category:', category)
+// Start editing
+const startEditing = (category: Category) => {
+  editingCategoryId.value = category.id
+  editedCategoryName.value = category.name
+}
+
+// Cancel editing
+const cancelEditing = () => {
+  editingCategoryId.value = null
+  editedCategoryName.value = ''
+}
+
+// Save updated category
+const saveUpdatedCategory = async (category: Category) => {
+  if (!editedCategoryName.value.trim()) return
+
+  try {
+    await updateCategory(category.id, { name: editedCategoryName.value })
+
+    const target = categories.value?.find((cat) => cat.id === category.id)
+    if (target) {
+      target.name = editedCategoryName.value
+    }
+
+    editingCategoryId.value = null
+    editedCategoryName.value = ''
+  } catch (error) {
+    console.error('Error updating category:', error)
+  }
 }
 </script>
 
@@ -77,20 +107,47 @@ const editCategory = (category: Category) => {
       <div v-else>
         <ul class="divide-y">
           <li v-for="category in categories" :key="category.id" class="py-3 flex justify-between items-center">
-            <span class="text-lg font-medium">{{ category.name }}</span>
-            <div class="space-x-4">
-              <button
-                @click="editCategory(category)"
-                class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600"
-              >
-                Edit
-              </button>
-              <button
-                @click="deleteCategoryHandler(category.id)"
-                class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-              >
-                Delete
-              </button>
+            <div class="flex-1">
+              <template v-if="editingCategoryId === category.id">
+                <input
+                  v-model="editedCategoryName"
+                  type="text"
+                  class="p-2 border border-gray-300 rounded-lg w-full"
+                />
+              </template>
+              <template v-else>
+                <span class="text-lg font-medium">{{ category.name }}</span>
+              </template>
+            </div>
+            <div class="space-x-4 flex-shrink-0">
+              <template v-if="editingCategoryId === category.id">
+                <button
+                  @click="saveUpdatedCategory(category)"
+                  class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                >
+                  Save
+                </button>
+                <button
+                  @click="cancelEditing"
+                  class="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+              </template>
+              <template v-else>
+                <button
+                  @click="startEditing(category)"
+                  class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="deleteCategoryHandler(category.id)"
+                  class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </template>
             </div>
           </li>
         </ul>

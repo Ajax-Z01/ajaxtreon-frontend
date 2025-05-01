@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useProducts } from '~/composables/useProducts'
-import { useCategories } from '~/composables/useCategories' // Asumsi ada composable untuk mendapatkan kategori
-import type { Product } from '~/types/Inventory'
-import type { Category } from '~/types/Category' // Asumsi ada tipe Category
+import { useCategories } from '~/composables/useCategories'
+import type { Product, Category } from '~/types/Inventory'
 
 const { getProducts, addProduct, updateProduct, deleteProduct } = useProducts()
-const { getCategories } = useCategories() // Mengambil kategori
+const { getCategories } = useCategories()
 
 const { data: products, pending: loading, refresh } = await useAsyncData<Product[]>('products', () => getProducts())
 const { data: categories, pending: loadingCategories } = await useAsyncData<Category[]>('categories', () => getCategories())
@@ -15,6 +14,7 @@ const isFormOpen = ref(false)
 const isEditing = ref(false)
 const formTitle = ref('Add New Product')
 const selectedProductId = ref<string | null>(null)
+const safeProducts = computed(() => products.value ?? [])
 
 // Form data
 const form = ref({
@@ -23,18 +23,6 @@ const form = ref({
   stock: 0,
   categoryId: ''
 })
-
-// Fetch products
-const fetchProducts = async () => {
-  loading.value = true
-  try {
-    products.value = await getProducts()
-  } catch (error) {
-    console.error('Error fetching products', error)
-  } finally {
-    loading.value = false
-  }
-}
 
 // Open form for adding
 const openAddForm = () => {
@@ -94,12 +82,12 @@ const handleDelete = async (id: string) => {
     <div v-if="loading" class="text-gray-500">Loading...</div>
 
     <!-- No Products State -->
-    <div v-else-if="products.length === 0" class="text-gray-500">No products available.</div>
-
+    <div v-else-if="!products || products.length === 0" class="text-gray-500">No products available.</div>
+    
     <!-- Product List -->
     <div v-else>
       <ul class="space-y-4">
-        <li v-for="product in products" :key="product.id" class="p-6 bg-white shadow-lg rounded-lg flex justify-between items-center">
+        <li v-for="product in safeProducts" :key="product.id">
           <div class="text-lg font-semibold">{{ product.name }}</div>
           <div class="flex items-center gap-4">
             <div><strong>Price:</strong> ${{ product.price }}</div>

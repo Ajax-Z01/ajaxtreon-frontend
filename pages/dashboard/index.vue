@@ -48,7 +48,8 @@ const logoutUser = async () => {
 
 const goToProducts = () => router.push('/products')
 const goToCategories = () => router.push('/categories')
-const goToOrders = () => router.push('/orders') // Add navigation to Orders
+const goToOrders = () => router.push('/orders')
+const goToStocks = () => router.push('/stocks')
 
 onMounted(() => {
   onAuthStateChanged(auth, async (authUser) => {
@@ -131,6 +132,12 @@ onMounted(() => {
         class="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition"
       >
         Manage Orders
+      </button>
+      <button
+        @click="goToStocks"
+        class="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition"
+      >
+        Manage Stocks
       </button>
     </div>
   </div>

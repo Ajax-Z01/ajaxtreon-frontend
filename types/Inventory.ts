@@ -12,7 +12,7 @@ export type UpdateProductPayload = Partial<Omit<Product, 'id'>>
 export interface Category {
     id: number
     name: string
-  }  
+}
 
 export interface Stock {
     id: string
@@ -20,6 +20,14 @@ export interface Stock {
     quantity: number
     createdAt: Date
     updatedAt: Date
+}
+
+export interface StockChangePayload {
+    productId: string
+    changeType: 'add' | 'subtract'
+    quantity: number
+    timestamp: Date
+    note: string
 }
 
 export type OrderStatus = 'pending' | 'completed' | 'cancelled'
