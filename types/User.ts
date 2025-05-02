@@ -1,10 +1,8 @@
-export interface User {
-  uid: string;
-  email: string;
-  displayName?: string;
-  role: 'admin' | 'user';
-  createdAt: Date;
-  updatedAt: Date;
+export type User = {
+  id: string
+  name: string
+  email: string
+  role: 'admin' | 'user'
 }
   
 export interface AuthUser {

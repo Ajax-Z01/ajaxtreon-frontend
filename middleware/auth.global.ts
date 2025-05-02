@@ -6,7 +6,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const publicPages = ['/', '/auth/login', '/auth/register']
   if (publicPages.includes(to.path)) return
 
-  const user = await getCurrentUser()
+  const user = await getCurrentUserWithToken()
   if (!user) {
     return navigateTo('/auth/login')
   }

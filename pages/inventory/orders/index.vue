@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, toRaw } from 'vue'
 import { useOrders } from '~/composables/useOrders'
 import { useProducts } from '~/composables/useProducts'
+import { useUsers } from '~/composables/useUsers'
 import type { Order, Product, OrderStatus } from '~/types/Inventory'
+import type { User } from '~/types/User'
 
 const { getOrders, addOrder, updateOrder, deleteOrder } = useOrders()
-const { data: orders = ref([]), pending: loading, refresh } = await useAsyncData<Order[]>('orders', () => getOrders())
 const { getProducts } = useProducts()
-const { data: products } = await useAsyncData<Product[]>('products', () => getProducts(), {
-  default: () => []
-})
+const { getUsers } = useUsers()
+
+const { data: orders = ref([]), pending: loading, refresh } = useAsyncData<Order[]>('orders', getOrders, { default: () => [] })
+const { data: products = ref([]) } = useAsyncData<Product[]>('products', getProducts, { default: () => [] })
+const { data: users = ref([]) } = useAsyncData<User[]>('users', getUsers, { default: () => [] })
 
 const isFormOpen = ref(false)
 const isEditing = ref(false)
@@ -21,11 +24,13 @@ const form = ref<{
   customerId: string
   productId: string
   quantity: number
+  totalPrice?: number
   status: OrderStatus
 }>({
   customerId: '',
   productId: '',
   quantity: 1,
+  totalPrice: 0,
   status: 'pending'
 })
 
@@ -44,6 +49,7 @@ const openAddForm = () => {
     customerId: '',
     productId: '',
     quantity: 1,
+    totalPrice: 0,
     status: 'pending'
   }
   isEditing.value = false
@@ -57,6 +63,7 @@ const openEditForm = (order: Order) => {
     customerId: order.customerId,
     productId: order.productId,
     quantity: order.quantity,
+    totalPrice: order.totalPrice,
     status: order.status || 'pending'
   }
   selectedOrderId.value = order.id
@@ -67,10 +74,14 @@ const openEditForm = (order: Order) => {
 // Submit form
 const handleSubmit = async () => {
   try {
+    const rawFormData = toRaw(form.value)  // Convert to plain object
+    rawFormData.totalPrice = computedTotalPrice.value // Add totalPrice to raw form data
+    console.log('Raw Form Data with Total Price:', rawFormData)
+
     if (isEditing.value && selectedOrderId.value) {
-      await updateOrder(selectedOrderId.value, form.value)
+      await updateOrder(selectedOrderId.value, rawFormData)  // Use rawFormData here
     } else {
-      await addOrder(form.value)
+      await addOrder(rawFormData)  // Use rawFormData here
     }
     await refresh()
     isFormOpen.value = false
@@ -98,6 +109,11 @@ const getProductTotal = (order: Order) => {
   const product = products.value.find(p => p.id === order.productId)
   return product ? (product.price * order.quantity).toFixed(2) : '0.00'
 }
+
+const getCustomerNameById = (id: string) => {
+  const user = users.value.find(u => u.id === id)
+  return user ? user.name || user.email : 'Unknown Customer'
+}
 </script>
 
 <template>
@@ -122,6 +138,9 @@ const getProductTotal = (order: Order) => {
       <ul class="space-y-4">
         <li v-for="order in orders" :key="order.id" class="p-6 bg-white shadow-lg rounded-lg flex justify-between items-center">
           <div class="text-lg font-semibold">Order for: {{ getProductNameById(order.productId) }}</div>
+          <div class="text-lg font-semibold">
+            Order by: {{ getCustomerNameById(order.customerId) }}
+          </div>
           <div class="flex items-center gap-4">
             <div><strong>Qty:</strong> {{ order.quantity }}</div>
             <div><strong>Total:</strong> ${{ getProductTotal(order) }}</div>
@@ -151,10 +170,15 @@ const getProductTotal = (order: Order) => {
         <h2 class="text-xl font-bold mb-4">{{ formTitle }}</h2>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
-          <!-- NEW: Customer ID -->
+          <!-- Customer ID -->
           <div>
-            <label class="block text-sm font-medium mb-1">Customer ID</label>
-            <input v-model="form.customerId" type="text" class="w-full border rounded px-3 py-2" required />
+            <label class="block text-sm font-medium mb-1">Customer</label>
+            <select v-model="form.customerId" class="w-full border rounded px-3 py-2" required>
+              <option disabled value="">-- Select Customer --</option>
+              <option v-for="user in users" :key="user.id" :value="user.id">
+                {{ user.name || user.email || user.id }}
+              </option>
+            </select>
           </div>
 
           <div>

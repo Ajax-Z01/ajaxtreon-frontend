@@ -37,6 +37,7 @@ export type Order = {
     customerId: string
     productId: string
     quantity: number
+    totalPrice: number
     status: OrderStatus
     createdAt: string
 }
