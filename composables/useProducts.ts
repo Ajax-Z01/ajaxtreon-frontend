@@ -18,7 +18,7 @@ export const useProducts = () => {
   }
 
   const getProducts = async (): Promise<Product[]> => {
-    const { data, error } = await useFetch<Product[]>(`${baseUrl}/product`, {
+    const { data, error } = await useFetch<Product[]>(`${baseUrl}/inventory/product`, {
       method: 'GET',
       headers: getHeaders(),
     })
@@ -31,7 +31,7 @@ export const useProducts = () => {
   }
 
   const addProduct = async (product: CreateProductPayload): Promise<string> => {
-    const { data, error } = await useFetch<{ id: string }>(`${baseUrl}/product`, {
+    const { data, error } = await useFetch<{ id: string }>(`${baseUrl}/inventory/product`, {
       method: 'POST',
       body: product,
       headers: getHeaders(),
@@ -45,7 +45,7 @@ export const useProducts = () => {
   }
 
   const updateProduct = async (id: string, update: UpdateProductPayload): Promise<void> => {
-    const { error } = await useFetch(`${baseUrl}/product/${id}`, {
+    const { error } = await useFetch(`${baseUrl}/inventory/product/${id}`, {
       method: 'PUT',
       body: update,
       headers: getHeaders(),
@@ -57,7 +57,7 @@ export const useProducts = () => {
   }
 
   const deleteProduct = async (id: string): Promise<void> => {
-    const { error } = await useFetch(`${baseUrl}/product/${id}`, {
+    const { error } = await useFetch(`${baseUrl}/inventory/product/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })

@@ -15,7 +15,7 @@ export const useOrders = () => {
   }
 
   const getOrders = async (): Promise<Order[]> => {
-    const { data, error } = await useFetch<Order[]>(`${baseUrl}/order`, {
+    const { data, error } = await useFetch<Order[]>(`${baseUrl}/inventory/order`, {
       method: 'GET',
       headers: getHeaders(),
     })
@@ -28,7 +28,7 @@ export const useOrders = () => {
   }
 
   const addOrder = async (order: CreateOrderPayload): Promise<string> => {
-    const { data, error } = await useFetch<{ id: string }>(`${baseUrl}/order`, {
+    const { data, error } = await useFetch<{ id: string }>(`${baseUrl}/inventory/order`, {
       method: 'POST',
       body: order,
       headers: getHeaders(),
@@ -42,7 +42,7 @@ export const useOrders = () => {
   }
 
   const updateOrder = async (id: string, update: UpdateOrderPayload): Promise<void> => {
-    const { error } = await useFetch(`${baseUrl}/order/${id}`, {
+    const { error } = await useFetch(`${baseUrl}/inventory/order/${id}`, {
       method: 'PUT',
       body: update,
       headers: getHeaders(),
@@ -54,7 +54,7 @@ export const useOrders = () => {
   }
 
   const deleteOrder = async (id: string): Promise<void> => {
-    const { error } = await useFetch(`${baseUrl}/order/${id}`, {
+    const { error } = await useFetch(`${baseUrl}/inventory/order/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })

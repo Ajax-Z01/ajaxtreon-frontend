@@ -1,4 +1,4 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+// nuxt.config.ts
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
@@ -7,16 +7,14 @@ export default defineNuxtConfig({
     exposeConfig: true,
     viewer: true,
   },
-  plugins: [
-    '~/plugins/firebase.ts',
-  ],
+  plugins: ['~/plugins/firebase.ts'],
   typescript: {
     strict: true
   },
   pages: true,
   runtimeConfig: {
     public: {
-      apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:5000/api',
+      apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:5000',
       firebaseApiKey: process.env.FIREBASE_API_KEY,
       firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN,
       firebaseDatabaseURL: process.env.FIREBASE_DATABASE_URL,
@@ -27,4 +25,19 @@ export default defineNuxtConfig({
       firebaseMeasurementId: process.env.FIREBASE_MEASUREMENT_ID,
     }
   },
+  app: {
+    head: {
+      title: 'Ajaxtreon ERP',
+      meta: [
+        { name: 'description', content: 'Ajaxtreon is a modern ERP web application to help businesses manage operations, finance, inventory, and more.' },
+        { name: 'keywords', content: 'ERP, business management, inventory, finance, Ajaxtreon' },
+        { name: 'author', content: 'Ajax' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { charset: 'utf-8' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      ]
+    }
+  }
 })

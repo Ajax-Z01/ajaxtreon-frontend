@@ -30,7 +30,7 @@ export const useStocks = () => {
   }
 
   const addStock = async (id: string, quantity: number, note: string = ''): Promise<void> => {
-    const { error } = await useFetch(`${baseUrl}/stock/add-stock/${id}`, {
+    const { error } = await useFetch(`${baseUrl}/inventory/stock/add-stock/${id}`, {
       method: 'POST',
       body: { quantity, note },
       headers: getHeaders(),
@@ -42,7 +42,7 @@ export const useStocks = () => {
   }
 
   const subtractStock = async (id: string, quantity: number, note: string = ''): Promise<void> => {
-    const { error } = await useFetch(`${baseUrl}/stock/subtract-stock/${id}`, {
+    const { error } = await useFetch(`${baseUrl}/inventory/stock/subtract-stock/${id}`, {
       method: 'POST',
       body: { quantity, note },
       headers: getHeaders(),
@@ -54,7 +54,7 @@ export const useStocks = () => {
   }
 
   const getStockHistory = async (id: string): Promise<StockChangePayload[]> => {
-    const { data, error } = await useFetch<StockChangePayload[]>(`${baseUrl}/stock/stock-history/${id}`, {
+    const { data, error } = await useFetch<StockChangePayload[]>(`${baseUrl}/inventory/stock/stock-history/${id}`, {
       method: 'GET',
       headers: getHeaders(),
     })

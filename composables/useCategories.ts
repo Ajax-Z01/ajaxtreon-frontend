@@ -17,7 +17,7 @@ export const useCategories = () => {
   }
 
   const getCategories = async (): Promise<Category[]> => {
-    const { data, error } = await useFetch<Category[]>(`${baseUrl}/category`, {
+    const { data, error } = await useFetch<Category[]>(`${baseUrl}/inventory/category`, {
       method: 'GET',
       headers: getHeaders(),
     })
@@ -30,7 +30,7 @@ export const useCategories = () => {
   }
 
   const addCategory = async (category: Omit<Category, 'id'>): Promise<number> => {
-    const { data, error } = await useFetch<{ id: number }>(`${baseUrl}/category`, {
+    const { data, error } = await useFetch<{ id: number }>(`${baseUrl}/inventory/category`, {
       method: 'POST',
       body: category,
       headers: getHeaders(),
@@ -44,7 +44,7 @@ export const useCategories = () => {
   }
 
   const updateCategory = async (id: number, category: Partial<Category>): Promise<void> => {
-    const { error } = await useFetch(`${baseUrl}/category/${id}`, {
+    const { error } = await useFetch(`${baseUrl}/inventory/category/${id}`, {
       method: 'PUT',
       body: category,
       headers: getHeaders(),
@@ -56,7 +56,7 @@ export const useCategories = () => {
   }
 
   const deleteCategory = async (id: number): Promise<void> => {
-    const { error } = await useFetch(`${baseUrl}/category/${id}`, {
+    const { error } = await useFetch(`${baseUrl}/inventory/category/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })

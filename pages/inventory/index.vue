@@ -68,15 +68,7 @@ onMounted(() => {
 
 <template>
   <div class="p-8 bg-gray-100 min-h-screen space-y-8">
-    <div class="flex items-center justify-between flex-wrap">
-      <h1 class="text-3xl font-bold mb-2">Welcome back, {{ user?.email }}!</h1>
-      <button
-        @click="logoutUser"
-        class="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition"
-      >
-        Logout
-      </button>
-    </div>
+    <h1 class="text-3xl font-bold mb-2">Inventory Management</h1>
 
     <!-- Statistik -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
