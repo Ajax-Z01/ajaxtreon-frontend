@@ -5,14 +5,14 @@ import { useRegister } from '~/composables/useRegister'
 
 const email = ref('')
 const password = ref('')
-const displayName = ref('')
+const name = ref('')
 const router = useRouter()
 const { register, registerError, loading } = useRegister()
 
 const handleRegister = async () => {
   if (loading.value) return
   try {
-    await register(email.value, password.value, displayName.value)
+    await register(email.value, password.value, name.value)
     console.log('Registered successfully')
     router.push('/dashboard')
   } catch (e) {
@@ -28,11 +28,11 @@ const handleRegister = async () => {
       <h2 class="text-2xl font-semibold mb-6 text-center">Register</h2>
       <form @submit.prevent="handleRegister">
         <div class="mb-4">
-          <label for="displayName" class="block text-sm font-medium">Display Name</label>
+          <label for="name" class="block text-sm font-medium">Username</label>
           <input
             type="text"
-            id="displayName"
-            v-model="displayName"
+            id="name"
+            v-model="name"
             required
             class="mt-2 p-2 w-full border border-gray-300 rounded"
           />

@@ -6,7 +6,7 @@ export const useRegister = () => {
   const registerError = ref<string | null>(null)
   const loading = ref(false)
 
-  const register = async (email: string, password: string, displayName: string) => {
+  const register = async (email: string, password: string, name: string) => {
     loading.value = true
     registerError.value = null
     const role = 'user'
@@ -14,7 +14,7 @@ export const useRegister = () => {
     try {
       const { data, error } = await useFetch(`${baseUrl}/auth/register`, {
         method: 'POST',
-        body: { email, password, displayName, role },
+        body: { email, password, name, role },
       })
 
       if (error.value) {

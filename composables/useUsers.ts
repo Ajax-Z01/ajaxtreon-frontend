@@ -1,13 +1,24 @@
-import { useCookie, useRuntimeConfig, useFetch, createError, useState } from '#app'
+import { useRuntimeConfig, useFetch, createError, useState } from '#app'
 import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
 import type { User } from '~/types/User'
 
 export const useUsers = () => {
   const baseUrl = useRuntimeConfig().public.apiBaseUrl
-  const authToken = useCookie<string | null>('authToken')
 
-  // Store user token in state for better persistence across the app
-  const userToken = useState('userToken', () => authToken.value)
+  // Store user token in state
+  const userToken = useState<string | null>('userToken', () => {
+    if (process.client) {
+      return localStorage.getItem('userToken')
+    }
+    return null
+  })
+
+  const setUserToken = (token: string) => {
+    userToken.value = token
+    if (process.client) {
+      localStorage.setItem('userToken', token)
+    }
+  }
 
   const getHeaders = () => {
     const headers: HeadersInit = {
@@ -17,26 +28,24 @@ export const useUsers = () => {
     if (userToken.value) {
       headers['Authorization'] = `Bearer ${userToken.value}`
     }
+
     return headers
   }
 
-  // Fetch all users (Admin only)
-  const getUsers = async (): Promise<User[]> => {
-    try {
-      // Ensure the token is set first
-      if (!userToken.value) {
-        const { token } = await getCurrentUserWithToken()
-
-        if (token) {
-          userToken.value = token
-          authToken.value = token // Save token in cookie for persistence
-        }
-      }
-
-      // Wait until we have the token
-      if (!userToken.value) {
+  const ensureToken = async () => {
+    if (!userToken.value) {
+      const { token } = await getCurrentUserWithToken()
+      if (token) {
+        setUserToken(token)
+      } else {
         throw createError({ statusCode: 401, message: 'Unauthorized' })
       }
+    }
+  }
+
+  const getUsers = async (): Promise<User[]> => {
+    try {
+      await ensureToken()
 
       const { data, error } = await useFetch<User[]>(`${baseUrl}/user`, {
         method: 'GET',
@@ -54,9 +63,10 @@ export const useUsers = () => {
     }
   }
 
-  // Fetch user by ID
   const getUserById = async (id: string): Promise<User | null> => {
     try {
+      await ensureToken()
+
       const { data, error } = await useFetch<User>(`${baseUrl}/user/${id}`, {
         method: 'GET',
         headers: getHeaders(),
@@ -73,9 +83,10 @@ export const useUsers = () => {
     }
   }
 
-  // Create new user
   const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
     try {
+      await ensureToken()
+
       const { data, error } = await useFetch<User>(`${baseUrl}/user`, {
         method: 'POST',
         headers: getHeaders(),
@@ -93,9 +104,10 @@ export const useUsers = () => {
     }
   }
 
-  // Update user information
   const updateUserInfo = async (id: string, updatedData: Omit<User, 'id'>): Promise<User> => {
     try {
+      await ensureToken()
+
       const { data, error } = await useFetch<User>(`${baseUrl}/user/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
@@ -113,9 +125,10 @@ export const useUsers = () => {
     }
   }
 
-  // Delete user
   const deleteUserInfo = async (id: string): Promise<void> => {
     try {
+      await ensureToken()
+
       const { error } = await useFetch(`${baseUrl}/user/${id}`, {
         method: 'DELETE',
         headers: getHeaders(),
@@ -130,9 +143,10 @@ export const useUsers = () => {
     }
   }
 
-  // Set user role (Admin only)
   const setUserRole = async (id: string, role: string): Promise<User> => {
     try {
+      await ensureToken()
+
       const { data, error } = await useFetch<User>(`${baseUrl}/user/${id}/role`, {
         method: 'PUT',
         headers: getHeaders(),

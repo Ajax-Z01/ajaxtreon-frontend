@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import ModalCreateUser from '~/components/ModalCreateUser.vue'
+import ModalEditUser from '~/components/ModalEditUser.vue'
 import { useUsers } from '~/composables/useUsers'
-import { useRouter } from 'vue-router'
 import type { User } from '~/types/User'
 
 const users = ref<User[]>([]) // Typing the users array
 const selectedUser = ref<User | null>(null) // Typing selectedUser with User type or null
 const { getUsers, getUserById, createUser, updateUserInfo, deleteUserInfo, setUserRole } = useUsers() // Destructure functions from useUsers
-const router = useRouter()
+
+const showCreateModal = ref(false) // Modal state for create user
+const showEditModal = ref(false) // Modal state for edit user
 
 // Fetch users on component mount
 onMounted(async () => {
@@ -18,36 +21,36 @@ onMounted(async () => {
   }
 })
 
-// Fetch user details by ID
-const fetchUserById = async (userId: string) => {
-  try {
-    selectedUser.value = await getUserById(userId) // Fetch the user by ID
-  } catch (error) {
-    console.error('Error fetching user by ID:', error)
-  }
+const handleCreateUser = (userData: {
+  name: string
+  email: string
+  password: string
+  role: 'user' | 'admin'
+}) => {
+  createUser(userData)
+  const tempId = 'temp-id-' + Date.now();
+  users.value.push({ ...userData, id: tempId })
+  showCreateModal.value = false
 }
 
-// Create a new user
-const createNewUser = async (userData: User) => {
-  try {
-    const newUser = await createUser(userData) // Create a new user
-    users.value.push(newUser) // Add the newly created user to the list
-  } catch (error) {
-    console.error('Error creating user:', error)
+const handleUpdateUser = (userData: {
+  id: string
+  name: string
+  email: string
+  role: 'user' | 'admin'
+  password: string
+}) => {
+  updateUserInfo(userData.id, userData)
+  const index = users.value.findIndex(user => user.id === userData.id)
+  if (index !== -1) {
+    users.value[index] = { ...users.value[index], ...userData }
   }
+  showEditModal.value = false
 }
 
-// Update user information
-const updateUser = async (userId: string, updatedData: User) => {
-  try {
-    const updatedUser = await updateUserInfo(userId, updatedData) // Update user info
-    const index = users.value.findIndex(user => user.id === userId)
-    if (index !== -1) {
-      users.value[index] = updatedUser // Update the user in the list
-    }
-  } catch (error) {
-    console.error('Error updating user:', error)
-  }
+const fetchUserById = (userId: string) => {
+  selectedUser.value = users.value.find(user => user.id === userId) || null // Ensure selectedUser is either User or null
+  showEditModal.value = true
 }
 
 // Delete user
@@ -68,6 +71,7 @@ const setUserRoleForUser = async (userId: string, role: 'admin' | 'user') => {
     if (index !== -1) {
       users.value[index] = updatedUser // Update the user in the list with the new role
     }
+    users.value = await getUsers()
   } catch (error) {
     console.error('Error setting user role:', error)
   }
@@ -87,12 +91,12 @@ const setUserRoleForUser = async (userId: string, role: 'admin' | 'user') => {
 
     <!-- Add User Button -->
     <div class="mb-4 text-right">
-      <router-link
-        to="/user/create"
+      <button
+        @click="showCreateModal = true"
         class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
       >
         Add New User
-      </router-link>
+      </button>
     </div>
 
     <!-- User List -->
@@ -115,12 +119,12 @@ const setUserRoleForUser = async (userId: string, role: 'admin' | 'user') => {
             <td class="px-4 py-2">{{ user.email }}</td>
             <td class="px-4 py-2">{{ user.role }}</td>
             <td class="px-4 py-2">
-              <router-link
-                :to="`/user/edit/${user.id}`"
+              <button
+                @click="fetchUserById(user.id)"
                 class="text-blue-500 hover:text-blue-700 mr-4"
               >
                 Edit
-              </router-link>
+              </button>
               <button
                 @click="deleteUser(user.id)"
                 class="text-red-500 hover:text-red-700"
@@ -144,5 +148,11 @@ const setUserRoleForUser = async (userId: string, role: 'admin' | 'user') => {
         </tbody>
       </table>
     </div>
+
+    <!-- Modal Create User -->
+    <ModalCreateUser :showModal="showCreateModal" @closeModal="showCreateModal = false" @createUser="handleCreateUser" />
+
+    <!-- Modal Edit User -->
+    <ModalEditUser :showModal="showEditModal" :selectedUser="selectedUser" @closeModal="showEditModal = false" @updateUser="handleUpdateUser" />
   </div>
 </template>

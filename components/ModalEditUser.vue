@@ -1,44 +1,84 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUsers } from '~/composables/useUsers'
-import type { User } from '~/types/User'
+import { ref, watchEffect, defineProps, defineEmits } from 'vue'
 
-const router = useRouter()
-const { createUser } = useUsers()
+// Tipe props
+const { showModal, selectedUser } = defineProps<{
+  showModal: boolean
+  selectedUser: {
+    id: string
+    name: string
+    email: string
+    role: 'user' | 'admin'
+  } | null
+}>()
 
-// Tambahkan password ke form
-const form = ref<Omit<User, 'id'> & { password: string }>({
+const emit = defineEmits<{
+  (e: 'updateUser', payload: {
+    id: string
+    name: string
+    email: string
+    role: 'user' | 'admin'
+    password: string
+  }): void
+  (e: 'closeModal'): void
+}>()
+
+// Form ref
+const form = ref<{
+  name: string
+  email: string
+  role: 'user' | 'admin'
+  password: string
+}>({
   name: '',
   email: '',
   role: 'user',
-  password: '',
+  password: ''
 })
 
-// Submit untuk membuat user baru
-const submitForm = async () => {
-  try {
-    await createUser(form.value)
-    router.push('/user')
-  } catch (error) {
-    console.error('Error creating user:', error)
+// Sync data saat selectedUser berubah
+watchEffect(() => {
+  if (selectedUser) {
+    form.value.name = selectedUser.name
+    form.value.email = selectedUser.email
+    form.value.role = selectedUser.role
   }
+})
+
+const updateUser = async () => {
+  try {
+    if (!selectedUser) return
+
+    emit('updateUser', {
+    id: selectedUser.id,
+    ...form.value
+    })
+  } catch (error) {
+    console.error('Error updating user:', error)
+  }
+}
+
+const closeModal = () => {
+  emit('closeModal')
 }
 </script>
 
 <template>
-  <div class="p-8 bg-gray-100 min-h-screen">
-    <NuxtLink
-      to="/user"
-      class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-    >
-      ← Back to User Management
-    </NuxtLink>
+  <div
+    v-if="showModal"
+    class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50"
+  >
+    <div class="bg-white p-6 rounded-lg shadow-md max-w-xl mx-auto relative">
+      <button
+        @click="closeModal"
+        class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+      >
+        &times;
+      </button>
 
-    <h1 class="text-3xl font-bold mb-6">Create New User</h1>
+      <h1 class="text-3xl font-bold mb-6">Edit User</h1>
 
-    <div class="bg-white p-6 rounded-lg shadow-md max-w-xl mx-auto">
-      <form @submit.prevent="submitForm">
+      <form @submit.prevent="updateUser">
         <div class="mb-4">
           <label class="block text-sm font-medium mb-1">Name</label>
           <input
@@ -59,14 +99,12 @@ const submitForm = async () => {
           />
         </div>
 
-        <!-- Field password -->
         <div class="mb-4">
           <label class="block text-sm font-medium mb-1">Password</label>
           <input
             v-model="form.password"
             type="password"
             class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           />
         </div>
 
@@ -86,7 +124,7 @@ const submitForm = async () => {
             type="submit"
             class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
-            Create User
+            Update User
           </button>
         </div>
       </form>

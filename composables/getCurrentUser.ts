@@ -8,7 +8,7 @@ export const getCurrentUserWithToken = (): Promise<{ user: FirebaseUser | null; 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       unsubscribe()
       if (user) {
-        const token = await user.getIdToken()
+        const token = await user.getIdToken(true)
         resolve({ user, token })
       } else {
         resolve({ user: null, token: null })
