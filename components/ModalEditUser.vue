@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { ref, watchEffect, defineProps, defineEmits } from 'vue'
+import { ref, watchEffect } from 'vue'
+import { validateUserInput } from '~/composables/useUserValidation'
 
-// Tipe props
+const errors = ref<Record<string, string>>({})
+
+// Props
 const { showModal, selectedUser } = defineProps<{
   showModal: boolean
   selectedUser: {
@@ -23,35 +26,40 @@ const emit = defineEmits<{
   (e: 'closeModal'): void
 }>()
 
-// Form ref
-const form = ref<{
-  name: string
-  email: string
-  role: 'user' | 'admin'
-  password: string
-}>({
+// Form state
+const form = ref({
   name: '',
   email: '',
-  role: 'user',
+  role: 'user' as 'user' | 'admin',
   password: ''
 })
 
-// Sync data saat selectedUser berubah
+// Sync data
 watchEffect(() => {
   if (selectedUser) {
     form.value.name = selectedUser.name
     form.value.email = selectedUser.email
     form.value.role = selectedUser.role
+    form.value.password = '' // Kosongkan password setiap kali form dibuka
   }
 })
 
+// Submit update
 const updateUser = async () => {
   try {
     if (!selectedUser) return
 
+    const validation = validateUserInput(form.value, { requirePassword: false })
+    errors.value = validation.errors
+    
+    if (!validation) {
+      console.log('Form errors:', errors)
+      return
+    }
+
     emit('updateUser', {
-    id: selectedUser.id,
-    ...form.value
+      id: selectedUser.id,
+      ...form.value
     })
   } catch (error) {
     console.error('Error updating user:', error)
@@ -87,6 +95,7 @@ const closeModal = () => {
             class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
+          <p v-if="errors.name" class="text-sm text-red-600 mt-1">{{ errors.name }}</p>
         </div>
 
         <div class="mb-4">
@@ -97,6 +106,7 @@ const closeModal = () => {
             class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
+          <p v-if="errors.email" class="text-sm text-red-600 mt-1">{{ errors.email }}</p>
         </div>
 
         <div class="mb-4">
@@ -106,6 +116,7 @@ const closeModal = () => {
             type="password"
             class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <p v-if="errors.password" class="text-sm text-red-600 mt-1">{{ errors.password }}</p>
         </div>
 
         <div class="mb-4">
@@ -117,6 +128,7 @@ const closeModal = () => {
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
+          <p v-if="errors.role" class="text-sm text-red-600 mt-1">{{ errors.role }}</p>
         </div>
 
         <div class="text-right">

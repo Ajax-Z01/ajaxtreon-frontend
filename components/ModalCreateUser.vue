@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ref, watchEffect, defineProps, defineEmits } from 'vue'
+import { ref, watchEffect } from 'vue'
+import { validateUserInput } from '~/composables/useUserValidation'
+
+const errors = ref<Record<string, string>>({})
 
 // Props definition
 const props = defineProps<{
@@ -33,12 +36,18 @@ watchEffect(() => {
       password: '',
       role: 'user'
     }
+    errors.value = {}
   }
 })
 
 // Emit create event
 const createNewUser = async () => {
   try {
+    const validation = validateUserInput(form.value, { requirePassword: true })
+    errors.value = validation.errors
+
+    if (!validation.valid) return
+
     emit('createUser', { ...form.value })
   } catch (error) {
     console.error('Error creating user:', error)
@@ -74,6 +83,7 @@ const closeModal = () => {
             class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
+          <p v-if="errors.name" class="text-sm text-red-600 mt-1">{{ errors.name }}</p>
         </div>
 
         <div class="mb-4">
@@ -84,6 +94,7 @@ const closeModal = () => {
             class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
+          <p v-if="errors.email" class="text-sm text-red-600 mt-1">{{ errors.email }}</p>
         </div>
 
         <div class="mb-4">
@@ -94,6 +105,7 @@ const closeModal = () => {
             class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
+          <p v-if="errors.password" class="text-sm text-red-600 mt-1">{{ errors.password }}</p>
         </div>
 
         <div class="mb-4">
@@ -105,6 +117,7 @@ const closeModal = () => {
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
+          <p v-if="errors.role" class="text-sm text-red-600 mt-1">{{ errors.role }}</p>
         </div>
 
         <div class="text-right">

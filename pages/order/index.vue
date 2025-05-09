@@ -3,8 +3,7 @@ import { ref, computed, toRaw } from 'vue'
 import { useOrders } from '~/composables/useOrders'
 import { useProducts } from '~/composables/useProducts'
 import { useUsers } from '~/composables/useUsers'
-import type { Order, OrderStatus } from '~/types/Order'
-import type { Product } from '~/types/Inventory'
+import type { Order, Product, OrderStatus } from '~/types/Inventory'
 import type { User } from '~/types/User'
 
 const { getOrders, addOrder, updateOrder, deleteOrder } = useOrders()
@@ -33,11 +32,13 @@ const form = ref<{
   customerId: string
   productId: string
   quantity: number
+  totalPrice?: number
   status: OrderStatus
 }>({
   customerId: '',
   productId: '',
   quantity: 1,
+  totalPrice: 0,
   status: 'pending'
 })
 
@@ -56,6 +57,7 @@ const openAddForm = () => {
     customerId: '',
     productId: '',
     quantity: 1,
+    totalPrice: 0,
     status: 'pending'
   }
   isEditing.value = false
@@ -69,6 +71,7 @@ const openEditForm = (order: Order) => {
     customerId: order.customerId,
     productId: order.productId,
     quantity: order.quantity,
+    totalPrice: order.totalPrice,
     status: order.status || 'pending'
   }
   selectedOrderId.value = order.id
@@ -80,6 +83,7 @@ const openEditForm = (order: Order) => {
 const handleSubmit = async () => {
   try {
     const rawFormData = toRaw(form.value)  // Convert to plain object
+    rawFormData.totalPrice = computedTotalPrice.value // Add totalPrice to raw form data
     console.log('Raw Form Data with Total Price:', rawFormData)
 
     if (isEditing.value && selectedOrderId.value) {
@@ -123,7 +127,7 @@ const getCustomerNameById = (id: string) => {
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
     <NuxtLink
-      to="/inventory"
+      to="/dashboard"
       class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
     >
       ← Back to Dashboard
@@ -132,12 +136,13 @@ const getCustomerNameById = (id: string) => {
     <h1 class="text-3xl font-bold mb-6">Order Management</h1>
 
     <!-- Add Order Button -->
-    <div class="mb-8">
-      <button @click="openAddForm" class="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
-        Add New Order
+    <div class="mb-4 text-right">
+      <button
+        @click="openAddForm" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Add New Payment
       </button>
     </div>
-
     <!-- Loading State -->
     <div v-if="loading" class="text-gray-500">Loading...</div>
 

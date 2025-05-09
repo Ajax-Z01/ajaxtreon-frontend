@@ -1,4 +1,4 @@
-import type { Order, CreateOrderPayload, UpdateOrderPayload } from '~/types/Inventory'
+import type { Order, CreateOrderPayload, UpdateOrderPayload } from '~/types/Order'
 
 export const useOrders = () => {
   const baseUrl = useRuntimeConfig().public.apiBaseUrl
@@ -15,7 +15,7 @@ export const useOrders = () => {
   }
 
   const getOrders = async (): Promise<Order[]> => {
-    const { data, error } = await useFetch<Order[]>(`${baseUrl}/inventory/order`, {
+    const { data, error } = await useFetch<Order[]>(`${baseUrl}/order`, {
       method: 'GET',
       headers: getHeaders(),
     })
@@ -28,21 +28,22 @@ export const useOrders = () => {
   }
 
   const addOrder = async (order: CreateOrderPayload): Promise<string> => {
-    const { data, error } = await useFetch<{ id: string }>(`${baseUrl}/inventory/order`, {
+    const { data, error, status } = await useFetch<{ id: string }>(`${baseUrl}/order`, {
       method: 'POST',
       body: order,
       headers: getHeaders(),
     })
-
+  
     if (error.value) {
-      throw createError({ statusCode: 500, message: 'Failed to add order' })
+      const message = error.value?.data?.message || 'Failed to add order'
+      throw createError({ statusCode: Number(status.value) || 500, message })
     }
-
+  
     return data.value?.id || ''
-  }
+  }  
 
   const updateOrder = async (id: string, update: UpdateOrderPayload): Promise<void> => {
-    const { error } = await useFetch(`${baseUrl}/inventory/order/${id}`, {
+    const { error } = await useFetch(`${baseUrl}/order/${id}`, {
       method: 'PUT',
       body: update,
       headers: getHeaders(),
@@ -54,7 +55,7 @@ export const useOrders = () => {
   }
 
   const deleteOrder = async (id: string): Promise<void> => {
-    const { error } = await useFetch(`${baseUrl}/inventory/order/${id}`, {
+    const { error } = await useFetch(`${baseUrl}/order/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })

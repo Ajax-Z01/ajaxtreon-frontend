@@ -165,6 +165,7 @@ export const useUsers = () => {
   }
 
   return {
+    ensureToken,
     getUsers,
     getUserById,
     createUser,

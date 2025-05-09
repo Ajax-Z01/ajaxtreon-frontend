@@ -1,69 +1,26 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAuth, onAuthStateChanged } from 'firebase/auth'
-import type { Product } from '~/types/Inventory'
-import { useAuth } from '~/composables/useAuth'
 import { useProducts } from '~/composables/useProducts'
 import { useCategories } from '~/composables/useCategories'
-import { useOrders } from '~/composables/useOrders'
 
 const router = useRouter()
-const auth = getAuth()
-const { logout } = useAuth()
-
-const stats = ref([
-  { label: 'Products', value: 0 },
-  { label: 'Categories', value: 0 },
-  { label: 'Orders', value: 0 }
-])
-
-const recentProducts = ref<Product[]>([])
-const user = ref<{ email: string | null, uid: string | null } | null>(null)
-
 const { getProducts } = useProducts()
 const { getCategories } = useCategories()
-const { getOrders } = useOrders()
 
-const fetchStats = async () => {
-  try {
-    const products = (await getProducts()) || []
-    stats.value[0].value = products.length
-    recentProducts.value = products.slice(0, 5)
+const { data: products = ref([]) } = useAsyncData('products', getProducts, { default: () => [] })
+const { data: categories = ref([]) } = useAsyncData('categories', getCategories, { default: () => [] })
 
-    const categories = (await getCategories()) || []
-    stats.value[1].value = categories.length
+const stats = computed(() => [
+  { label: 'Products', value: products.value.length },
+  { label: 'Categories', value: categories.value.length }
+])
 
-    const orders = (await getOrders()) || []
-    stats.value[2].value = orders.length
-  } catch (error) {
-    console.error('Error fetching stats:', error)
-  }
-}
-
-const logoutUser = async () => {
-  await logout()
-  router.push('/auth/login')
-}
+const recentProducts = computed(() => products.value.slice(0, 5))
 
 const goToProducts = () => router.push('/inventory/products')
 const goToCategories = () => router.push('/inventory/categories')
-const goToOrders = () => router.push('/inventory/orders')
 const goToStocks = () => router.push('/inventory/stocks')
-
-onMounted(() => {
-  onAuthStateChanged(auth, async (authUser) => {
-    if (authUser) {
-      user.value = {
-        email: authUser.email,
-        uid: authUser.uid
-      }
-      await fetchStats()
-    } else {
-      router.push('/auth/login')
-    }
-  })
-})
 </script>
 
 <template>
@@ -71,7 +28,7 @@ onMounted(() => {
     <h1 class="text-3xl font-bold mb-2">Inventory Management</h1>
 
     <!-- Statistik -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div
         v-for="stat in stats"
         :key="stat.label"
@@ -96,8 +53,8 @@ onMounted(() => {
               <div class="font-medium text-gray-900">{{ product.name }}</div>
               <div class="text-sm text-gray-500">#{{ product.id }}</div>
             </div>
-            <div class="bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full">
-              ${{ product.price }}
+            <div class="bg-blue-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">
+              {{ product.stock }}
             </div>
           </li>
         </ul>
@@ -118,12 +75,6 @@ onMounted(() => {
         class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition"
       >
         Manage Categories
-      </button>
-      <button
-        @click="goToOrders"
-        class="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition"
-      >
-        Manage Orders
       </button>
       <button
         @click="goToStocks"
