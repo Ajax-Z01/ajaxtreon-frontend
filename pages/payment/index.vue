@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
-import { usePayment } from '~/composables/usePayment'
+import { usePayment } from '~/composables/usePayments'
 import type { PaymentData } from '~/types/Payment'
 import ModalCreatePayment from '~/components/ModalCreatePayment.vue'
 

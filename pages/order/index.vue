@@ -3,7 +3,8 @@ import { ref, computed, toRaw } from 'vue'
 import { useOrders } from '~/composables/useOrders'
 import { useProducts } from '~/composables/useProducts'
 import { useUsers } from '~/composables/useUsers'
-import type { Order, Product, OrderStatus } from '~/types/Inventory'
+import type { Order, OrderStatus } from '~/types/Order'
+import type { Product } from '~/types/Inventory'
 import type { User } from '~/types/User'
 
 const { getOrders, addOrder, updateOrder, deleteOrder } = useOrders()

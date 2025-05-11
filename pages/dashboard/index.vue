@@ -1,31 +1,13 @@
 <script setup>
-import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAuth, onAuthStateChanged } from 'firebase/auth'
-import { useAuth } from '~/composables/useAuth'
 
 const router = useRouter()
-const auth = getAuth()
 const { logout } = useAuth()
 
 const logoutUser = async () => {
   await logout()
   router.push('/auth/login')
 }
-
-onMounted(() => {
-  onAuthStateChanged(auth, async (authUser) => {
-    if (authUser) {
-      user.value = {
-        email: authUser.email,
-        uid: authUser.uid
-      }
-      await fetchStats()
-    } else {
-      router.push('/auth/login')
-    }
-  })
-})
 </script>
 
 <template>
@@ -61,6 +43,13 @@ onMounted(() => {
         <h2 class="text-xl font-semibold mb-4">Order Management</h2>
         <p class="text-gray-500 mb-4">Manage orders, shipping, and order statuses.</p>
         <router-link to="/order" class="text-blue-500 hover:text-blue-700">Go to Order Dashboard</router-link>
+      </div>
+      
+      <!-- Purchase Management Card -->
+      <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+        <h2 class="text-xl font-semibold mb-4">Purchase Management</h2>
+        <p class="text-gray-500 mb-4">Manage orders, shipping, and order statuses.</p>
+        <router-link to="/purchase" class="text-blue-500 hover:text-blue-700">Go to Purchase Dashboard</router-link>
       </div>
 
       <!-- Payment Management Card -->
