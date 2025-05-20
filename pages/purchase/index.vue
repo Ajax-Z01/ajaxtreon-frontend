@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, toRaw, onMounted } from 'vue'
+import { ref, toRaw, onMounted, watch  } from 'vue'
 import { usePurchases } from '~/composables/usePurchases'
 import { useProducts } from '~/composables/useProducts'
 import { useUsers } from '~/composables/useUsers'
@@ -28,17 +28,23 @@ const isEditing = ref(false)
 const formTitle = ref('Add New Purchase')
 const selectedPurchaseId = ref<string | null>(null)
 
-// Form state
+// Form state: sesuai dengan backend's CreatePurchasePayload
 const form = ref<{
   supplierId: string
   productId: string
   quantity: number
-  status: PurchaseStatus
+  unitPrice: number
+  status?: PurchaseStatus
+  invoiceNo?: string
+  notes?: string
 }>({
   supplierId: '',
   productId: '',
   quantity: 1,
-  status: 'pending'
+  unitPrice: 0,
+  status: 'pending',
+  invoiceNo: '',
+  notes: '',
 })
 
 const openAddForm = () => {
@@ -47,7 +53,10 @@ const openAddForm = () => {
     supplierId: '',
     productId: '',
     quantity: 1,
-    status: 'pending'
+    unitPrice: 0,
+    status: 'pending',
+    invoiceNo: '',
+    notes: '',
   }
   isEditing.value = false
   isFormOpen.value = true
@@ -59,7 +68,10 @@ const openEditForm = (purchase: Purchase) => {
     supplierId: purchase.supplierId,
     productId: purchase.productId,
     quantity: purchase.quantity,
-    status: purchase.status || 'pending'
+    unitPrice: purchase.unitPrice,
+    status: purchase.status || 'pending',
+    invoiceNo: purchase.invoiceNo || '',
+    notes: purchase.notes || '',
   }
   selectedPurchaseId.value = purchase.id
   isEditing.value = true
@@ -68,20 +80,21 @@ const openEditForm = (purchase: Purchase) => {
 
 const handleSubmit = async () => {
   try {
-    const rawForm = toRaw(form.value)
+    const rawForm = toRaw(form.value);
 
-    if (isEditing.value && selectedPurchaseId.value) {
-      await updatePurchaseStatus(selectedPurchaseId.value, { status: rawForm.status })
-    } else {
-      await addPurchase(rawForm)
+    if (!isEditing.value) {
+      delete rawForm.invoiceNo;
+      await addPurchase(rawForm);
+    } else if (selectedPurchaseId.value) {
+      await updatePurchaseStatus(selectedPurchaseId.value, { status: rawForm.status! });
     }
 
-    await refresh()
-    isFormOpen.value = false
+    await refresh();
+    isFormOpen.value = false;
   } catch (error) {
-    console.error('Error submitting purchase form', error)
+    console.error('Error submitting purchase form', error);
   }
-}
+};
 
 const handleDelete = async (id: string) => {
   try {
@@ -101,6 +114,18 @@ const getSupplierNameById = (id: string) => {
   const user = users.value.find(u => u.id === id)
   return user?.name || user?.email || 'Unknown Supplier'
 }
+
+watch(
+  () => form.value.productId,
+  (newProductId) => {
+    const product = products.value.find(p => p.id === newProductId)
+    if (product) {
+      form.value.unitPrice = product.price
+    } else {
+      form.value.unitPrice = 0
+    }
+  }
+)
 </script>
 
 <template>
@@ -129,6 +154,9 @@ const getSupplierNameById = (id: string) => {
     <div v-else>
       <ul class="space-y-4">
         <li v-for="purchase in purchases" :key="purchase.id" class="p-6 bg-white shadow rounded-lg flex justify-between items-center">
+          <div class="text-lg font-semibold">
+            Invoice No: {{ purchase.invoiceNo }}
+          </div>
           <div class="text-lg font-semibold">
             Product: {{ getProductNameById(purchase.productId) }}
           </div>
@@ -189,6 +217,21 @@ const getSupplierNameById = (id: string) => {
           <div>
             <label class="block text-sm font-medium mb-1">Quantity</label>
             <input v-model.number="form.quantity" type="number" min="1" class="w-full border rounded px-3 py-2" required :disabled="isEditing" />
+          </div>
+
+          <!-- Unit Price -->
+          <input v-model.number="form.unitPrice" type="number" readonly class="w-full border rounded px-3 py-2 bg-gray-100" />
+
+          <!-- Invoice No -->
+          <div v-if="isEditing">
+            <label class="block text-sm font-medium mb-1">Invoice No</label>
+            <input v-model="form.invoiceNo" type="text" class="w-full border rounded px-3 py-2" disabled />
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label class="block text-sm font-medium mb-1">Notes</label>
+            <textarea v-model="form.notes" class="w-full border rounded px-3 py-2" rows="3" :disabled="isEditing"></textarea>
           </div>
 
           <!-- Status -->

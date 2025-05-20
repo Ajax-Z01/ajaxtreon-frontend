@@ -11,7 +11,9 @@ const { showModal, selectedUser } = defineProps<{
     id: string
     name: string
     email: string
-    role: 'user' | 'admin'
+    role: 'user' | 'admin' | 'staff' | 'manager'
+    phone?: string
+    address?: string
   } | null
 }>()
 
@@ -20,31 +22,34 @@ const emit = defineEmits<{
     id: string
     name: string
     email: string
-    role: 'user' | 'admin'
+    role: 'user' | 'admin' | 'staff' | 'manager'
+    phone?: string
+    address?: string
     password: string
   }): void
   (e: 'closeModal'): void
 }>()
 
-// Form state
 const form = ref({
   name: '',
   email: '',
-  role: 'user' as 'user' | 'admin',
+  role: 'user' as 'user' | 'admin' | 'staff' | 'manager',
+  phone: '',
+  address: '',
   password: ''
 })
 
-// Sync data
 watchEffect(() => {
   if (selectedUser) {
     form.value.name = selectedUser.name
     form.value.email = selectedUser.email
     form.value.role = selectedUser.role
-    form.value.password = '' // Kosongkan password setiap kali form dibuka
+    form.value.phone = selectedUser.phone ?? ''
+    form.value.address = selectedUser.address ?? ''
+    form.value.password = ''
   }
 })
 
-// Submit update
 const updateUser = async () => {
   try {
     if (!selectedUser) return
@@ -52,14 +57,19 @@ const updateUser = async () => {
     const validation = validateUserInput(form.value, { requirePassword: false })
     errors.value = validation.errors
     
-    if (!validation) {
-      console.log('Form errors:', errors)
+    if (!validation.valid) {
+      console.log('Form errors:', errors.value)
       return
     }
 
     emit('updateUser', {
       id: selectedUser.id,
-      ...form.value
+      name: form.value.name,
+      email: form.value.email,
+      role: form.value.role,
+      phone: form.value.phone,
+      address: form.value.address,
+      password: form.value.password,
     })
   } catch (error) {
     console.error('Error updating user:', error)
@@ -110,6 +120,26 @@ const closeModal = () => {
         </div>
 
         <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">Phone</label>
+          <input
+            v-model="form.phone"
+            type="tel"
+            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p v-if="errors.phone" class="text-sm text-red-600 mt-1">{{ errors.phone }}</p>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">Address</label>
+          <textarea
+            v-model="form.address"
+            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows="3"
+          ></textarea>
+          <p v-if="errors.address" class="text-sm text-red-600 mt-1">{{ errors.address }}</p>
+        </div>
+
+        <div class="mb-4">
           <label class="block text-sm font-medium mb-1">Password</label>
           <input
             v-model="form.password"
@@ -127,6 +157,8 @@ const closeModal = () => {
           >
             <option value="user">User</option>
             <option value="admin">Admin</option>
+            <option value="staff">Staff</option>
+            <option value="manager">Manager</option>
           </select>
           <p v-if="errors.role" class="text-sm text-red-600 mt-1">{{ errors.role }}</p>
         </div>

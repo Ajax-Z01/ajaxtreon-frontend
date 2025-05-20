@@ -29,8 +29,8 @@ export const useCategories = () => {
     return data.value || []
   }
 
-  const addCategory = async (category: Omit<Category, 'id'>): Promise<number> => {
-    const { data, error } = await useFetch<{ id: number }>(`${baseUrl}/inventory/category`, {
+  const addCategory = async (category: Omit<Category, 'id'>): Promise<string> => {
+    const { data, error } = await useFetch<{ id: string }>(`${baseUrl}/inventory/category`, {
       method: 'POST',
       body: category,
       headers: getHeaders(),
@@ -40,10 +40,10 @@ export const useCategories = () => {
       throw createError({ statusCode: 500, message: 'Failed to add category' })
     }
 
-    return data.value?.id || 0
+    return data.value?.id || ''
   }
 
-  const updateCategory = async (id: number, category: Partial<Category>): Promise<void> => {
+  const updateCategory = async (id: string, category: Partial<Category>): Promise<void> => {
     const { error } = await useFetch(`${baseUrl}/inventory/category/${id}`, {
       method: 'PUT',
       body: category,
@@ -55,7 +55,7 @@ export const useCategories = () => {
     }
   }
 
-  const deleteCategory = async (id: number): Promise<void> => {
+  const deleteCategory = async (id: string): Promise<void> => {
     const { error } = await useFetch(`${baseUrl}/inventory/category/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),

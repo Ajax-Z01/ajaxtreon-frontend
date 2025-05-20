@@ -48,7 +48,7 @@ const logoutUser = async () => {
       <!-- Purchase Management Card -->
       <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
         <h2 class="text-xl font-semibold mb-4">Purchase Management</h2>
-        <p class="text-gray-500 mb-4">Manage orders, shipping, and order statuses.</p>
+        <p class="text-gray-500 mb-4">Manage purchases, invoices, and purchase statuses.</p>
         <router-link to="/purchase" class="text-blue-500 hover:text-blue-700">Go to Purchase Dashboard</router-link>
       </div>
 
@@ -57,6 +57,20 @@ const logoutUser = async () => {
         <h2 class="text-xl font-semibold mb-4">Payment Management</h2>
         <p class="text-gray-500 mb-4">Manage payments, invoices, and payment statuses.</p>
         <router-link to="/payment" class="text-blue-500 hover:text-blue-700">Go to Payment Dashboard</router-link>
+      </div>
+      
+      <!-- Customer Management Card -->
+      <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+        <h2 class="text-xl font-semibold mb-4">Customer Management</h2>
+        <p class="text-gray-500 mb-4">Manage customers, orders, and customer statuses.</p>
+        <router-link to="/customer" class="text-blue-500 hover:text-blue-700">Go to Customer Dashboard</router-link>
+      </div>
+      
+      <!-- Supplier Management Card -->
+      <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+        <h2 class="text-xl font-semibold mb-4">Supplier Management</h2>
+        <p class="text-gray-500 mb-4">Manage suppliers, orders, and supplier statuses.</p>
+        <router-link to="/supplier" class="text-blue-500 hover:text-blue-700">Go to Supplier Dashboard</router-link>
       </div>
     </div>
   </div>

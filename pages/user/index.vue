@@ -1,77 +1,109 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import ModalCreateUser from '~/components/ModalCreateUser.vue'
-import ModalEditUser from '~/components/ModalEditUser.vue'
+import ModalCreateUser from '~/components/modal/CreateUser.vue'
+import ModalEditUser from '~/components/modal/EditUser.vue'
 import { useUsers } from '~/composables/useUsers'
 import type { User } from '~/types/User'
 
-const users = ref<User[]>([]) // Typing the users array
-const selectedUser = ref<User | null>(null) // Typing selectedUser with User type or null
-const { getUsers, getUserById, createUser, updateUserInfo, deleteUserInfo, setUserRole } = useUsers() // Destructure functions from useUsers
+const users = ref<User[]>([])
+const selectedUser = ref<User | null>(null)
+const { getUsers, getUserById, createUser, updateUserInfo, deleteUserInfo, setUserRole } = useUsers()
 
-const showCreateModal = ref(false) // Modal state for create user
-const showEditModal = ref(false) // Modal state for edit user
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
 
-// Fetch users on component mount
 onMounted(async () => {
   try {
-    users.value = await getUsers() // Fetch users when the component mounts
+    users.value = await getUsers()
   } catch (error) {
     console.error('Error fetching users:', error)
   }
 })
 
-const handleCreateUser = (userData: {
+const handleCreateUser = async (userData: {
   name: string
   email: string
   password: string
-  role: 'user' | 'admin'
+  role: User['role']
+  phone?: string
+  address?: string
+  profilePictureUrl?: string
 }) => {
-  createUser(userData)
-  const tempId = 'temp-id-' + Date.now();
-  users.value.push({ ...userData, id: tempId })
-  showCreateModal.value = false
+  try {
+    const createdUser = await createUser({
+      ...userData,
+      createdAt: new Date().toISOString(),
+      isActive: true
+    })
+    console.log('User created:', createdUser)
+    users.value.push(createdUser)
+    users.value = await getUsers()
+    showCreateModal.value = false
+  } catch (error) {
+    console.error('Error creating user:', error)
+  }
 }
 
-const handleUpdateUser = (userData: {
+const handleUpdateUser = async (userData: {
   id: string
   name: string
   email: string
-  role: 'user' | 'admin'
-  password: string
+  role: User['role']
+  phone?: string
+  address?: string
+  profilePictureUrl?: string
+  password?: string
 }) => {
-  updateUserInfo(userData.id, userData)
-  const index = users.value.findIndex(user => user.id === userData.id)
-  if (index !== -1) {
-    users.value[index] = { ...users.value[index], ...userData }
+  try {
+    const existingUser = users.value.find(user => user.id === userData.id)
+    if (!existingUser) throw new Error('User not found')
+    const { id, ...rest } = userData
+    const updatedUser = await updateUserInfo(
+      id,
+      {
+        ...rest,
+        createdAt: existingUser.createdAt,
+        isActive: existingUser.isActive
+      }
+    )
+    const index = users.value.findIndex(user => user.id === userData.id)
+    if (index !== -1) {
+      users.value[index] = updatedUser
+    }
+    users.value = await getUsers()
+    showEditModal.value = false
+  } catch (error) {
+    console.error('Error updating user:', error)
   }
-  showEditModal.value = false
 }
 
-const fetchUserById = (userId: string) => {
-  selectedUser.value = users.value.find(user => user.id === userId) || null // Ensure selectedUser is either User or null
-  showEditModal.value = true
+const fetchUserById = async (userId: string) => {
+  try {
+    selectedUser.value = await getUserById(userId)
+    if (selectedUser.value) {
+      showEditModal.value = true
+    }
+  } catch (error) {
+    console.error('Error fetching user:', error)
+  }
 }
 
-// Delete user
 const deleteUser = async (userId: string) => {
   try {
-    await deleteUserInfo(userId) // Call deleteUserInfo to delete the user
-    users.value = users.value.filter(user => user.id !== userId) // Remove the user from the list
+    await deleteUserInfo(userId)
+    users.value = users.value.filter(user => user.id !== userId)
   } catch (error) {
     console.error('Error deleting user:', error)
   }
 }
 
-// Set user role (Admin only)
-const setUserRoleForUser = async (userId: string, role: 'admin' | 'user') => {
+const setUserRoleForUser = async (userId: string, role: User['role']) => {
   try {
-    const updatedUser = await setUserRole(userId, role) // Set the role of the user
+    const updatedUser = await setUserRole(userId, role)
     const index = users.value.findIndex(user => user.id === userId)
     if (index !== -1) {
-      users.value[index] = updatedUser // Update the user in the list with the new role
+      users.value[index] = updatedUser
     }
-    users.value = await getUsers()
   } catch (error) {
     console.error('Error setting user role:', error)
   }

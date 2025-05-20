@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useProducts } from '~/composables/useProducts'
 import { useCategories } from '~/composables/useCategories'
+import { useAuth } from '~/composables/useAuth'
 import type { Product, Category } from '~/types/Inventory'
 
 const { getProducts, addProduct, updateProduct, deleteProduct } = useProducts()
 const { getCategories } = useCategories()
+const { currentUser } = useAuth()
 
 const { data: products, pending: loading, refresh } = await useAsyncData<Product[]>('products', () => getProducts())
 const { data: categories, pending: loadingCategories } = await useAsyncData<Category[]>('categories', () => getCategories())
@@ -16,7 +18,6 @@ const formTitle = ref('Add New Product')
 const selectedProductId = ref<string | null>(null)
 const safeProducts = computed(() => products.value ?? [])
 
-// Form data
 const form = ref({
   name: '',
   price: 0,
@@ -24,7 +25,6 @@ const form = ref({
   categoryId: ''
 })
 
-// Open form for adding
 const openAddForm = () => {
   formTitle.value = 'Add New Product'
   form.value = { name: '', price: 0, stock: 0, categoryId: '' }
@@ -32,22 +32,32 @@ const openAddForm = () => {
   isFormOpen.value = true
 }
 
-// Open form for editing
 const openEditForm = (product: Product) => {
   formTitle.value = 'Update Product'
-  form.value = { name: product.name, price: product.price, stock: product.stock, categoryId: product.categoryId } // Pastikan categoryId terisi saat edit
+  form.value = { 
+    name: product.name, 
+    price: product.price, 
+    stock: product.stock, 
+    categoryId: product.categoryId 
+  }
   selectedProductId.value = product.id
   isEditing.value = true
   isFormOpen.value = true
 }
 
-// Submit form
 const handleSubmit = async () => {
   try {
+    if (!currentUser.value?.uid) {
+      throw new Error('User not authenticated')
+    }
+
     if (isEditing.value && selectedProductId.value) {
       await updateProduct(selectedProductId.value, form.value)
     } else {
-      await addProduct(form.value)
+      await addProduct({
+        ...form.value,
+        createdBy: currentUser.value.uid
+      })
     }
     await refresh()
     isFormOpen.value = false
@@ -56,7 +66,6 @@ const handleSubmit = async () => {
   }
 }
 
-// Delete product
 const handleDelete = async (id: string) => {
   try {
     await deleteProduct(id)

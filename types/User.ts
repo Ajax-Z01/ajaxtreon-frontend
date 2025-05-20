@@ -1,13 +1,21 @@
-export type User = {
-  id: string
-  name: string
-  email: string
-  role: 'admin' | 'user'
-}
-  
-export interface AuthUser {
+export type UserRole = 'admin' | 'user' | 'staff' | 'manager'
+
+export interface User {
+  id: string;
+  name: string;
   email: string;
-  uid: string;
-  role: 'admin' | 'user';
+  phone?: string;
+  address?: string;
+  role: UserRole;
+  isActive: boolean;
+  profilePictureUrl?: string;
+  createdAt: string;
+  updatedAt?: string;
+  lastLoginAt?: string;
 }
-  
+
+export interface AuthUser {
+  uid: string;
+  email: string;
+  role: UserRole;
+}

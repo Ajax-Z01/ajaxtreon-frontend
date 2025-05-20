@@ -27,20 +27,20 @@ export const useOrders = () => {
     return data.value || []
   }
 
-  const addOrder = async (order: CreateOrderPayload): Promise<string> => {
-    const { data, error, status } = await useFetch<{ id: string }>(`${baseUrl}/order`, {
-      method: 'POST',
-      body: order,
-      headers: getHeaders(),
-    })
-  
-    if (error.value) {
-      const message = error.value?.data?.message || 'Failed to add order'
-      throw createError({ statusCode: Number(status.value) || 500, message })
-    }
-  
-    return data.value?.id || ''
-  }  
+const addOrder = async (order: CreateOrderPayload): Promise<string> => {
+  const { data, error, status } = await useFetch<{ id: string }>(`${baseUrl}/order`, {
+    method: 'POST',
+    body: JSON.stringify(order),
+    headers: getHeaders(),
+  });
+
+  if (error.value) {
+    const message = error.value?.data?.message || 'Failed to add order';
+    throw createError({ statusCode: Number(status.value) || 500, message });
+  }
+
+  return data.value?.id || '';
+};
 
   const updateOrder = async (id: string, update: UpdateOrderPayload): Promise<void> => {
     const { error } = await useFetch(`${baseUrl}/order/${id}`, {

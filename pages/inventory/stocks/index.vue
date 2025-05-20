@@ -189,8 +189,8 @@ const getProductName = (id: string) => {
                 </p>
                 <p><strong>Quantity:</strong> {{ entry.quantity }}</p>
                 <p><strong>Change:</strong>
-                    <span :class="entry.change_type === 'add' ? 'text-green-600' : 'text-red-600'">
-                    {{ entry.change_type === 'add' ? ' +' : ' -' }}{{ entry.quantity }}
+                    <span :class="entry.changeType === 'add' ? 'text-green-600' : 'text-red-600'">
+                    {{ entry.changeType === 'add' ? ' +' : ' -' }}{{ entry.quantity }}
                     </span>
                 </p>
                 <p><strong>Note:</strong> {{ entry.note || '-' }}</p>
