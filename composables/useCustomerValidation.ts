@@ -1,13 +1,10 @@
+import type { ValidationResult } from '~/types/Validation'
+
 export interface CustomerInput {
   name: string
   email?: string
   phone?: string
   address?: string
-}
-
-export interface ValidationResult {
-  valid: boolean
-  errors: Record<string, string>
 }
 
 export const validateCustomerInput = (
@@ -18,23 +15,17 @@ export const validateCustomerInput = (
   if (!customerData.name || customerData.name.trim().length === 0) {
     errors.name = 'Name is required'
   }
-  
-  if (customerData.email) {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email)) {
-      errors.email = 'Email is not valid'
-    }
+
+  if (customerData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email)) {
+    errors.email = 'Email is not valid'
   }
 
-  if (customerData.phone) {
-    if (!/^[\d\s+()-]{6,20}$/.test(customerData.phone)) {
-      errors.phone = 'Phone number is not valid'
-    }
+  if (customerData.phone && !/^[\d\s+()-]{6,20}$/.test(customerData.phone)) {
+    errors.phone = 'Phone number is not valid'
   }
 
-  if (customerData.address) {
-    if (customerData.address.trim().length < 5) {
-      errors.address = 'Address must be at least 5 characters'
-    }
+  if (customerData.address && customerData.address.trim().length < 5) {
+    errors.address = 'Address must be at least 5 characters'
   }
 
   return {

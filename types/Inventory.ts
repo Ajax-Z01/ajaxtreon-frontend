@@ -34,9 +34,11 @@ export interface Stock {
   updatedAt: Date;
 }
 
+export type ChangeType = 'add' | 'subtract'
+
 export interface StockChangePayload {
   productId: string
-  changeType: 'add' | 'subtract'
+  changeType: ChangeType
   quantity: number
   note: string
   updatedAt: Date;  
