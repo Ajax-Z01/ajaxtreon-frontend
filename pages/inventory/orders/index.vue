@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, toRaw } from 'vue'
+import { ref, computed, toRaw, onMounted } from 'vue'
 import { useOrders } from '~/composables/useOrders'
 import { useProducts } from '~/composables/useProducts'
 import { useUsers } from '~/composables/useUsers'
-import type { Order, OrderStatus } from '~/types/Order'
-import type { Product } from '~/types/Inventory'
+import type { Order, OrderStatus, OrderItem } from '~/types/Order'
+import type { Product } from '~/types/Product'
 import type { User } from '~/types/User'
 
 const { getOrders, addOrder, updateOrder, deleteOrder } = useOrders()
@@ -28,47 +28,56 @@ const isEditing = ref(false)
 const formTitle = ref('Add New Order')
 const selectedOrderId = ref<string | null>(null)
 
-// Form data
+// Form data sesuai tipe baru (multi items)
 const form = ref<{
   customerId: string
-  productId: string
-  quantity: number
+  items: OrderItem[]
   status: OrderStatus
 }>({
   customerId: '',
-  productId: '',
-  quantity: 1,
+  items: [],
   status: 'pending'
 })
 
-const selectedProduct = computed(() =>
-  products.value.find(p => p.id === form.value.productId)
+// Tambah / hapus item di order form
+const addItemToOrder = () => {
+  form.value.items.push({
+    productId: '',
+    quantity: 1,
+    unitPrice: 0
+  })
+}
+
+const removeItemFromOrder = (index: number) => {
+  form.value.items.splice(index, 1)
+}
+
+const computedTotalAmount = computed(() =>
+  form.value.items.reduce((total, item) => {
+    const product = products.value.find(p => p.id === item.productId)
+    const price = product?.price || 0
+    item.unitPrice = price
+    return total + price * item.quantity
+  }, 0)
 )
 
-const computedTotalPrice = computed(() =>
-  selectedProduct.value?.price ? selectedProduct.value.price * form.value.quantity : 0
-)
-
-// Open form for adding
 const openAddForm = () => {
   formTitle.value = 'Add New Order'
   form.value = {
     customerId: '',
-    productId: '',
-    quantity: 1,
+    items: [],
     status: 'pending'
   }
   isEditing.value = false
+  selectedOrderId.value = null
   isFormOpen.value = true
 }
 
-// Open form for editing
 const openEditForm = (order: Order) => {
   formTitle.value = 'Update Order'
   form.value = {
     customerId: order.customerId,
-    productId: order.productId,
-    quantity: order.quantity,
+    items: order.items.map(item => ({ ...item })),
     status: order.status || 'pending'
   }
   selectedOrderId.value = order.id
@@ -79,14 +88,19 @@ const openEditForm = (order: Order) => {
 // Submit form
 const handleSubmit = async () => {
   try {
-    const rawFormData = toRaw(form.value)  // Convert to plain object
-    console.log('Raw Form Data with Total Price:', rawFormData)
+    const payload = {
+      customerId: form.value.customerId,
+      items: toRaw(form.value.items),
+      totalAmount: computedTotalAmount.value,
+      status: form.value.status
+    }
 
     if (isEditing.value && selectedOrderId.value) {
-      await updateOrder(selectedOrderId.value, rawFormData)  // Use rawFormData here
+      await updateOrder(selectedOrderId.value, payload)
     } else {
-      await addOrder(rawFormData)  // Use rawFormData here
+      await addOrder(payload)
     }
+
     await refresh()
     isFormOpen.value = false
   } catch (error) {
@@ -109,11 +123,6 @@ const getProductNameById = (productId: string) => {
   return product ? product.name : 'Unknown Product'
 }
 
-const getProductTotal = (order: Order) => {
-  const product = products.value.find(p => p.id === order.productId)
-  return product ? (product.price * order.quantity).toFixed(2) : '0.00'
-}
-
 const getCustomerNameById = (id: string) => {
   const user = users.value.find(u => u.id === id)
   return user ? user.name || user.email : 'Unknown Customer'
@@ -128,7 +137,7 @@ const getCustomerNameById = (id: string) => {
     >
       ← Back to Dashboard
     </NuxtLink>
-    
+
     <h1 class="text-3xl font-bold mb-6">Order Management</h1>
 
     <!-- Add Order Button -->
@@ -147,17 +156,23 @@ const getCustomerNameById = (id: string) => {
     <!-- Orders List -->
     <div v-else>
       <ul class="space-y-4">
-        <li v-for="order in orders" :key="order.id" class="p-6 bg-white shadow-lg rounded-lg flex justify-between items-center">
-          <div class="text-lg font-semibold">Order for: {{ getProductNameById(order.productId) }}</div>
-          <div class="text-lg font-semibold">
-            Order by: {{ getCustomerNameById(order.customerId) }}
-          </div>
-          <div class="flex items-center gap-4">
-            <div><strong>Qty:</strong> {{ order.quantity }}</div>
-            <div><strong>Total:</strong> ${{ getProductTotal(order) }}</div>
-            <div><strong>Status:</strong> {{ order.status }}</div>
-          </div>
-          <div class="flex gap-2">
+        <li
+          v-for="order in orders"
+          :key="order.id"
+          class="p-6 bg-white shadow-lg rounded-lg flex flex-col gap-2"
+        >
+          <div class="font-semibold">Customer: {{ getCustomerNameById(order.customerId) }}</div>
+          <ul class="ml-4 text-sm text-gray-700">
+            <li
+              v-for="item in order.items"
+              :key="item.productId"
+            >
+              {{ getProductNameById(item.productId) }} × {{ item.quantity }} = ${{ (item.unitPrice * item.quantity).toFixed(2) }}
+            </li>
+          </ul>
+          <div class="font-semibold">Total: ${{ order.totalAmount.toFixed(2) }}</div>
+          <div><strong>Status:</strong> {{ order.status }}</div>
+          <div class="flex gap-2 mt-2">
             <button
               @click="openEditForm(order)"
               class="p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
@@ -177,38 +192,71 @@ const getCustomerNameById = (id: string) => {
 
     <!-- Modal Form -->
     <div v-if="isFormOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+      <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg max-h-[90vh] overflow-auto">
         <h2 class="text-xl font-bold mb-4">{{ formTitle }}</h2>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
-          <!-- Customer ID -->
+          <!-- Customer -->
           <div>
             <label class="block text-sm font-medium mb-1">Customer</label>
             <select v-model="form.customerId" class="w-full border rounded px-3 py-2" required>
               <option disabled value="">-- Select Customer --</option>
               <option v-for="user in users" :key="user.id" :value="user.id">
-                {{ user.name || user.email || user.id }}
+                {{ user.name || user.email }}
               </option>
             </select>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium mb-1">Product</label>
-            <select v-model="form.productId" class="w-full border rounded px-3 py-2" required>
-              <option disabled value="">-- Select Product --</option>
-              <option v-for="product in products" :key="product.id" :value="product.id">
-                {{ product.name || product.id }}
-              </option>
-            </select>
+          <!-- Order Items -->
+          <div v-for="(item, index) in form.items" :key="index" class="border p-3 rounded mb-3">
+            <div class="flex items-center gap-2 mb-2">
+              <select v-model="item.productId" class="flex-1 border rounded px-3 py-2" required>
+                <option disabled value="">-- Select Product --</option>
+                <option v-for="product in products" :key="product.id" :value="product.id">
+                  {{ product.name }}
+                </option>
+              </select>
+              <input
+                type="number"
+                v-model.number="item.quantity"
+                min="1"
+                class="w-24 border rounded px-3 py-2"
+                required
+              />
+              <button
+                type="button"
+                @click="removeItemFromOrder(index)"
+                class="text-red-500 hover:underline"
+                v-if="form.items.length > 1"
+              >
+                Remove
+              </button>
+            </div>
+            <div class="text-sm text-gray-500">
+              Unit Price: ${{ products.find(p => p.id === item.productId)?.price || 0 }}
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Quantity</label>
-            <input v-model.number="form.quantity" type="number" min="1" class="w-full border rounded px-3 py-2" required />
-          </div>
+
+          <!-- Add Item Button -->
+          <button
+            type="button"
+            @click="addItemToOrder"
+            class="mb-4 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            + Add Item
+          </button>
+
+          <!-- Total Price -->
           <div>
             <label class="block text-sm font-medium mb-1">Total Price</label>
-            <input :value="computedTotalPrice" readonly class="w-full border rounded px-3 py-2 bg-gray-100" />
+            <input
+              :value="computedTotalAmount.toFixed(2)"
+              readonly
+              class="w-full border rounded px-3 py-2 bg-gray-100"
+            />
           </div>
+
+          <!-- Status -->
           <div>
             <label class="block text-sm font-medium mb-1">Status</label>
             <select v-model="form.status" class="w-full border rounded px-3 py-2">
@@ -217,11 +265,19 @@ const getCustomerNameById = (id: string) => {
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
+
           <div class="flex justify-end gap-2">
-            <button type="button" @click="isFormOpen = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+            <button
+              type="button"
+              @click="isFormOpen = false"
+              class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            >
               Cancel
             </button>
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            <button
+              type="submit"
+              class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
               {{ isEditing ? 'Update' : 'Add' }}
             </button>
           </div>

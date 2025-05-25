@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useCategories } from '~/composables/useCategories'
-import type { Category } from '~/types/Inventory'
+import type { Category } from '~/types/Category'
 
 const { getCategories, addCategory, deleteCategory, updateCategory } = useCategories()
 const { currentUser } = useAuth()

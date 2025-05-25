@@ -23,6 +23,9 @@ export default defineNuxtConfig({
       firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
       firebaseAppId: process.env.FIREBASE_APP_ID,
       firebaseMeasurementId: process.env.FIREBASE_MEASUREMENT_ID,
+      CLOUDINARY_UPLOAD_PRESET: process.env.CLOUDINARY_UPLOAD_PRESET,
+      CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+      CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     }
   },
   app: {

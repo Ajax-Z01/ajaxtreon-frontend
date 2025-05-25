@@ -4,7 +4,7 @@ import { useOrders } from '~/composables/useOrders'
 import { useProducts } from '~/composables/useProducts'
 import { useUsers } from '~/composables/useUsers'
 import type { Order, OrderItem, OrderStatus, CreateOrderPayload } from '~/types/Order'
-import type { Product } from '~/types/Inventory'
+import type { Product } from '~/types/Product'
 import type { User } from '~/types/User'
 
 const { getOrders, addOrder, updateOrder, deleteOrder } = useOrders()

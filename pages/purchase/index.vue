@@ -4,7 +4,7 @@ import { usePurchases } from '~/composables/usePurchases'
 import { useProducts } from '~/composables/useProducts'
 import { useUsers } from '~/composables/useUsers'
 import type { Purchase, PurchaseStatus } from '~/types/Purchase'
-import type { Product } from '~/types/Inventory'
+import type { Product } from '~/types/Product'
 import type { User } from '~/types/User'
 
 const { getPurchases, addPurchase, updatePurchaseStatus, deletePurchase } = usePurchases()

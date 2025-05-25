@@ -1,5 +1,5 @@
 import { useProducts } from '~/composables/useProducts'
-import type { StockChangePayload } from '~/types/Inventory'
+import type { StockChangePayload } from '~/types/Stock'
 
 export const useStocks = () => {
   const baseUrl = useRuntimeConfig().public.apiBaseUrl

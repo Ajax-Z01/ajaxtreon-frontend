@@ -1,4 +1,4 @@
-import type { Product, CreateProductPayload, UpdateProductPayload } from '~/types/Inventory'
+import type { Product, CreateProductPayload, UpdateProductPayload } from '~/types/Product'
 
 export const useProducts = () => {
   const baseUrl = useRuntimeConfig().public.apiBaseUrl

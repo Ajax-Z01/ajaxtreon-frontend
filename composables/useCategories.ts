@@ -1,4 +1,4 @@
-import type { Category } from '~/types/Inventory'
+import type { Category } from '~/types/Category'
 
 export const useCategories = () => {
   const baseUrl = useRuntimeConfig().public.apiBaseUrl

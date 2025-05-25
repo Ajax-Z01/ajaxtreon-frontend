@@ -2,7 +2,6 @@
 import { ref, reactive, computed } from 'vue'
 import { useStocks } from '~/composables/useStocks'
 import { useProducts } from '~/composables/useProducts'
-import type { Stock, Product } from '~/types/Inventory'
 
 const { getStocks, addStock, subtractStock, getStockHistory } = useStocks()
 const { getProducts } = useProducts()
