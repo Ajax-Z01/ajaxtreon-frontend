@@ -37,34 +37,9 @@ export const useRegister = () => {
     }
   }
 
-  // Add function for retrieving user profile
-  const getUserProfile = async (token: string) => {
-    try {
-      const { data, error } = await useFetch(`${baseUrl}/auth/profile`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (error.value) {
-        throw new Error(error.value.message || 'Error fetching user profile')
-      }
-
-      return data.value
-
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error('Error fetching user profile:', err)
-      }
-      throw new Error('Error fetching user profile')
-    }
-  }
-
   return {
     register,
     registerError,
     loading,
-    getUserProfile,
   }
 }

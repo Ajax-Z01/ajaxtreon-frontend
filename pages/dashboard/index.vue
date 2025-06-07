@@ -66,6 +66,13 @@ const logoutUser = async () => {
         <router-link to="/customer" class="text-blue-500 hover:text-blue-700">Go to Customer Dashboard</router-link>
       </div>
       
+      <!-- Seller Management Card -->
+      <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+        <h2 class="text-xl font-semibold mb-4">Seller Management</h2>
+        <p class="text-gray-500 mb-4">Manage sellers, products, and seller statuses.</p>
+        <router-link to="/seller" class="text-blue-500 hover:text-blue-700">Go to Seller Dashboard</router-link>
+      </div>
+      
       <!-- Supplier Management Card -->
       <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
         <h2 class="text-xl font-semibold mb-4">Supplier Management</h2>

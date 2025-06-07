@@ -5,7 +5,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (process.server) return
 
   // List of public pages that don't require login
-  const publicPages = ['/', '/auth/login', '/auth/register']
+  const publicPages = ['/', '/auth/login', '/auth/register', '/auth/register-seller']
   
   // Skip public pages from authentication check
   if (publicPages.includes(to.path)) return

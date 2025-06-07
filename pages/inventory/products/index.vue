@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useProducts } from '~/composables/useProducts'
 import { useCategories } from '~/composables/useCategories'
 import { useCloudinaryUploader } from '~/composables/useCloudinaryUploader'
+import AddProductModal from '~/components/modal/CreateProduct.vue'
+import EditProductModal from '~/components/modal/EditProduct.vue'
 import type { Product, CreateProductPayload, UpdateProductPayload } from '~/types/Product'
 import type { Category } from '~/types/Category'
 
@@ -19,25 +21,10 @@ const isFormOpen = ref(false)
 const isEditing = ref(false)
 const formTitle = ref('Add New Product')
 const selectedProductId = ref<string | null>(null)
-const safeProducts = computed(() => products.value ?? [])
-const isUploading = ref(false)
-const uploadError = ref<string | null>(null)
+const selectedProduct = computed(() => products.value?.find(p => p.id === selectedProductId.value) ?? null)
 
-const form = ref<CreateProductPayload>({
-  name: '',
-  price: 0,
-  stock: 0,
-  categoryId: '',
-  description: '',
-  imageUrl: '',
-  sku: '',
-  isActive: true,
-  createdBy: ''
-})
-
-const openAddForm = () => {
-  formTitle.value = 'Add New Product'
-  form.value = {
+function createEmptyForm(): CreateProductPayload {
+  return {
     name: '',
     price: 0,
     stock: 0,
@@ -48,13 +35,26 @@ const openAddForm = () => {
     isActive: true,
     createdBy: ''
   }
+}
+
+const form = reactive<CreateProductPayload>(createEmptyForm())
+
+const resetForm = () => {
+  const empty = createEmptyForm()
+  Object.assign(form, empty)
+  selectedProductId.value = null
+}
+
+const openAddForm = () => {
+  formTitle.value = 'Add New Product'
+  resetForm()
   isEditing.value = false
   isFormOpen.value = true
 }
 
 const openEditForm = (product: Product) => {
   formTitle.value = 'Update Product'
-  form.value = {
+  Object.assign(form, {
     name: product.name,
     price: product.price,
     stock: product.stock,
@@ -64,22 +64,22 @@ const openEditForm = (product: Product) => {
     sku: product.sku ?? '',
     isActive: product.isActive ?? true,
     createdBy: product.createdBy
-  }
+  })
   selectedProductId.value = product.id
   isEditing.value = true
   isFormOpen.value = true
 }
 
-const handleFileChange = async (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file) return
+const isUploading = ref(false)
+const uploadError = ref<string | null>(null)
 
+const handleFileChange = async (file: File | null) => {
+  if (!file) return
   isUploading.value = true
   uploadError.value = null
   try {
     const url = await uploadImage(file)
-    form.value.imageUrl = url
+    form.imageUrl = url
   } catch (error) {
     uploadError.value = (error as Error).message || 'Upload failed'
   } finally {
@@ -89,27 +89,23 @@ const handleFileChange = async (event: Event) => {
 
 const handleSubmit = async () => {
   try {
-    if (!currentUser.value?.uid) {
-      throw new Error('User not authenticated')
-    }
+    if (!currentUser.value?.uid) throw new Error('User not authenticated')
 
     const payload = {
-      ...form.value,
+      ...form,
       createdBy: currentUser.value.uid
     }
 
     if (isEditing.value && selectedProductId.value) {
-      const updatePayload: UpdateProductPayload = { ...payload }
-      await updateProduct(selectedProductId.value, updatePayload)
+      await updateProduct(selectedProductId.value, payload as UpdateProductPayload)
     } else {
-      const createPayload: CreateProductPayload = { ...payload }
-      await addProduct(createPayload)
+      await addProduct(payload as CreateProductPayload)
     }
 
     await refresh()
     isFormOpen.value = false
   } catch (error) {
-    console.error('Error submitting form', error)
+    console.error('Submit error:', error)
   }
 }
 
@@ -118,13 +114,12 @@ const handleDelete = async (id: string) => {
     await deleteProduct(id)
     await refresh()
   } catch (error) {
-    console.error('Error deleting product', error)
+    console.error('Error deleting product:', error)
   }
 }
 
 const confirmDelete = async (id: string) => {
-  const confirm = window.confirm('Are you sure you want to delete this product?')
-  if (confirm) {
+  if (window.confirm('Are you sure you want to delete this product?')) {
     await handleDelete(id)
   }
 }
@@ -138,7 +133,7 @@ const confirmDelete = async (id: string) => {
     >
       ← Back to Dashboard
     </NuxtLink>
-    
+
     <h1 class="text-3xl font-bold mb-6">Product Management</h1>
 
     <!-- Add Product Button -->
@@ -162,16 +157,16 @@ const confirmDelete = async (id: string) => {
       </div>
     </div>
 
-    <!-- No Products State -->
+    <!-- No Products or Categories State -->
     <div v-else-if="!products || products.length === 0 || !categories">
       <div class="text-gray-500">No products available or categories not loaded.</div>
     </div>
-    
+
     <!-- Product List -->
     <div v-else>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
-          v-for="product in safeProducts"
+          v-for="product in products ?? []"
           :key="product.id"
           class="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition"
         >
@@ -222,85 +217,28 @@ const confirmDelete = async (id: string) => {
       </div>
     </div>
 
-    <!-- Modal Form -->
-    <div v-if="isFormOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
-        <h2 class="text-xl font-bold mb-4">{{ formTitle }}</h2>
+    <!-- Modal Add Product -->
+    <AddProductModal
+      v-if="isFormOpen && !isEditing"
+      :categories="categories ?? []"
+      :form="form"
+      :isUploading="isUploading"
+      :uploadError="uploadError"
+      @close="isFormOpen = false"
+      @file-change="handleFileChange"
+      @submit="handleSubmit"
+    />
 
-        <form @submit.prevent="handleSubmit" class="space-y-4">
-          <!-- Name -->
-          <div>
-            <label class="block text-sm font-medium mb-1">Name</label>
-            <input v-model="form.name" type="text" class="w-full border rounded px-3 py-2" required />
-          </div>
-          <!-- Price -->
-          <div>
-            <label class="block text-sm font-medium mb-1">Price</label>
-            <input v-model.number="form.price" type="number" class="w-full border rounded px-3 py-2" required />
-          </div>
-          <!-- Stock -->
-          <div>
-            <label class="block text-sm font-medium mb-1">Stock</label>
-            <input v-model.number="form.stock" type="number" class="w-full border rounded px-3 py-2" required />
-          </div>
-          <!-- SKU -->
-          <div>
-            <label class="block text-sm font-medium mb-1">SKU</label>
-            <input v-model="form.sku" type="text" class="w-full border rounded px-3 py-2" />
-          </div>
-
-          <!-- Description -->
-          <div>
-            <label class="block text-sm font-medium mb-1">Description</label>
-            <textarea v-model="form.description" class="w-full border rounded px-3 py-2"></textarea>
-          </div>
-          
-          <!-- Image Upload -->
-          <div>
-            <label class="block text-sm font-medium mb-1">Product Image</label>
-
-            <!-- File input -->
-            <input type="file" accept="image/*" @change="handleFileChange" class="mb-2" />
-
-            <!-- Uploading status -->
-            <div v-if="isUploading" class="text-sm text-blue-600 mb-2">Uploading image...</div>
-
-            <!-- Upload error -->
-            <div v-if="uploadError" class="text-sm text-red-600 mb-2">{{ uploadError }}</div>
-
-            <!-- Preview gambar -->
-            <div v-if="form.imageUrl" class="mb-2">
-              <img :src="form.imageUrl" alt="Uploaded Image" class="max-h-40 rounded border" />
-            </div>
-
-            <!-- Image URL readonly input -->
-            <input v-model="form.imageUrl" type="text" readonly class="w-full border rounded px-3 py-2 bg-gray-100" />
-          </div>
-          
-          <!-- Is Active -->
-          <div class="flex items-center gap-2">
-            <input v-model="form.isActive" type="checkbox" id="isActive" />
-            <label for="isActive" class="text-sm font-medium">Active</label>
-          </div>
-          <!-- Category Select -->
-          <div>
-            <label class="block text-sm font-medium mb-1">Category</label>
-            <select v-model="form.categoryId" class="w-full border rounded px-3 py-2" required>
-              <option v-for="category in categories" :key="category.id" :value="category.id">
-                {{ category.name }}
-              </option>
-            </select>
-          </div>
-          <div class="flex justify-end gap-2">
-            <button type="button" @click="isFormOpen = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-              Cancel
-            </button>
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-              {{ isEditing ? 'Update' : 'Add' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <!-- Modal Edit Product -->
+    <EditProductModal
+      v-if="isFormOpen && isEditing && selectedProduct"
+      :form="form"
+      :categories="categories ?? []"
+      :isUploading="isUploading"
+      :uploadError="uploadError"
+      @close="isFormOpen = false"
+      @file-change="handleFileChange"
+      @submit="handleSubmit"
+    />
   </div>
 </template>
