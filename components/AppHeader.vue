@@ -40,15 +40,6 @@ defineProps<{
         >
           Dashboard
         </NuxtLink>
-
-        <NuxtLink
-          v-if="isAuthenticated"
-          to="/user"
-          class="hover:underline"
-          :class="{ 'font-semibold underline': route.path.startsWith('/user') }"
-        >
-          Users
-        </NuxtLink>
       </nav>
     </div>
   </header>

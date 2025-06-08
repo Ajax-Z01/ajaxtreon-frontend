@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
+import { getCurrentUserWithRole } from '~/composables/getCurrentUser';
 
 const { login, error, loading } = useAuth();
 const email = ref('');
@@ -12,11 +13,25 @@ const handleLogin = async () => {
   if (loading.value) return;
   try {
     await login(email.value, password.value);
+
     if (!error.value) {
-      console.log('Logged in');
-      router.push('/dashboard');
+      const { user } = await getCurrentUserWithRole();
+
+      if (!user || !user.role) {
+        return router.replace('/auth/login');
+      }
+
+      switch (user.role) {
+        case 'seller':
+          router.replace('/seller/dashboard');
+          break;
+        case 'admin':
+          router.replace('/admin/dashboard');
+          break;
+        default:
+          router.replace('/customer/dashboard');
+      }
     } else {
-      console.error('Login failed:', error.value);
       alert('Login failed: ' + error.value);
     }
   } catch (e) {
