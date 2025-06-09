@@ -1,4 +1,7 @@
 <script setup>
+definePageMeta({
+  middleware: ['seller-only']
+})
 import { useRouter } from 'vue-router'
 
 const router = useRouter()

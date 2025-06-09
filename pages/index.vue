@@ -1,29 +1,37 @@
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { onAuthStateChanged, getAuth } from 'firebase/auth'
 import { ref, onMounted } from 'vue'
+import { getCurrentUserWithRole } from '~/composables/getCurrentUser'
 
 const router = useRouter()
 const isLoggedIn = ref(false)
-const isAuthReady = ref(false) // wait until Firebase finishes checking
+const isAuthReady = ref(false)
+const userRole = ref<string | null>(null)
 
-const navigateToLogin = () => {
-  router.push('/auth/login')
-}
-
-const navigateToRegister = () => {
-  router.push('/auth/register')
-}
+const navigateToLogin = () => router.push('/auth/login')
+const navigateToRegister = () => router.push('/auth/register')
 
 const navigateToDashboard = () => {
-  router.push('/dashboard')
+  if (userRole.value === 'admin') {
+    router.push('/admin/dashboard')
+  } else if (userRole.value === 'seller') {
+    router.push('/seller/dashboard')
+  } else {
+    router.push('/customer/dashboard')
+  }
 }
 
-onMounted(() => {
+onMounted(async () => {
   const auth = getAuth()
-  onAuthStateChanged(auth, user => {
+  onAuthStateChanged(auth, async user => {
     isLoggedIn.value = !!user
     isAuthReady.value = true
+
+    if (user) {
+      const { user: currentUser } = await getCurrentUserWithRole()
+      userRole.value = currentUser?.role ?? null
+    }
   })
 })
 </script>
@@ -34,7 +42,6 @@ onMounted(() => {
       <h1 class="text-4xl font-bold mb-4">Welcome to Ajaxtreon</h1>
       <p class="text-xl mb-6">Your all-in-one platform for managing your business and tasks efficiently.</p>
 
-      <!-- Render buttons only after auth check is ready -->
       <div v-if="isAuthReady" class="space-x-4">
         <button
           v-if="isLoggedIn"

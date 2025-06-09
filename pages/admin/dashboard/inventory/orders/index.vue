@@ -132,7 +132,7 @@ const getCustomerNameById = (id: string) => {
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
     <NuxtLink
-      to="/inventory"
+      to="/admin/dashboard/inventory"
       class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
     >
       ← Back to Dashboard

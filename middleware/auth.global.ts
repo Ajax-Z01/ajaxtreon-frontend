@@ -1,4 +1,3 @@
-// middleware/auth.global.ts
 import { defineNuxtRouteMiddleware, navigateTo } from 'nuxt/app'
 import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
 

@@ -2,6 +2,7 @@
 defineProps<{
   route: any
   isAuthenticated: boolean
+  role: 'admin' | 'seller' | 'customer' | null
 }>()
 </script>
 
@@ -21,7 +22,7 @@ defineProps<{
           Home
         </NuxtLink>
 
-        <!-- Only show when NOT authenticated -->
+        <!-- Show login if not authenticated -->
         <NuxtLink
           v-if="!isAuthenticated"
           to="/auth/login"
@@ -31,12 +32,12 @@ defineProps<{
           Login
         </NuxtLink>
 
-        <!-- Only show when authenticated -->
+        <!-- Show dashboard link if authenticated -->
         <NuxtLink
           v-if="isAuthenticated"
-          to="/dashboard"
+          :to="role === 'admin' ? '/admin/dashboard' : role === 'seller' ? '/seller/dashboard' : '/customer/dashboard'"
           class="hover:underline"
-          :class="{ 'font-semibold underline': route.path.startsWith('/dashboard') }"
+          :class="{ 'font-semibold underline': route.path.includes('/dashboard') }"
         >
           Dashboard
         </NuxtLink>
