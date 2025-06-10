@@ -1,20 +1,15 @@
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
 import { validateUserInput } from '~/composables/useUserValidation'
+import type { User, UserRole } from '~/types/User'
 
+const allRoles: UserRole[] = ['user', 'admin', 'staff', 'manager', 'customer', 'supplier']
 const errors = ref<Record<string, string>>({})
 
 // Props
 const { showModal, selectedUser } = defineProps<{
   showModal: boolean
-  selectedUser: {
-    id: string
-    name: string
-    email: string
-    role: 'user' | 'admin' | 'staff' | 'manager'
-    phone?: string
-    address?: string
-  } | null
+  selectedUser: User | null
 }>()
 
 const emit = defineEmits<{
@@ -22,7 +17,7 @@ const emit = defineEmits<{
     id: string
     name: string
     email: string
-    role: 'user' | 'admin' | 'staff' | 'manager'
+    role: UserRole
     phone?: string
     address?: string
     password: string
@@ -33,7 +28,7 @@ const emit = defineEmits<{
 const form = ref({
   name: '',
   email: '',
-  role: 'user' as 'user' | 'admin' | 'staff' | 'manager',
+  role: 'user' as UserRole,
   phone: '',
   address: '',
   password: ''

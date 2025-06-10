@@ -1,4 +1,4 @@
-import type { ChangeType } from './Inventory'
+import type { ChangeType } from './Stock'
 
 export interface ReportQuery {
   startDate: string

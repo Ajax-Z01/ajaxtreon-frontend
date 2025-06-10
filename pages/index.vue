@@ -1,36 +1,55 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { onAuthStateChanged, getAuth } from 'firebase/auth'
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getCurrentUserWithRole } from '~/composables/getCurrentUser'
 
 const router = useRouter()
-const isLoggedIn = ref(false)
-const isAuthReady = ref(false)
-const userRole = ref<string | null>(null)
 
+// State
+const isAuthReady = ref(false)
+const isLoggedIn = ref(false)
+const userRole = ref<string | null>(null)
+const isFetchingRole = ref(false)
+
+// Navigation methods
 const navigateToLogin = () => router.push('/auth/login')
 const navigateToRegister = () => router.push('/auth/register')
 
-const navigateToDashboard = () => {
-  if (userRole.value === 'admin') {
-    router.push('/admin/dashboard')
-  } else if (userRole.value === 'seller') {
-    router.push('/seller/dashboard')
-  } else {
-    router.push('/customer/dashboard')
-  }
+const navigateToDashboard = (role?: string) => {
+  if (role === 'admin') router.push('/admin/dashboard')
+  else if (role === 'seller') router.push('/seller/dashboard')
+  else router.push('/customer/dashboard')
 }
 
-onMounted(async () => {
+const onClickDashboard = () => {
+  navigateToDashboard(userRole.value || undefined)
+}
+
+// Computed to control UI display
+const isLoading = computed(() => isLoggedIn.value && (isFetchingRole.value || !userRole.value))
+
+// Check auth on mount
+onMounted(() => {
   const auth = getAuth()
   onAuthStateChanged(auth, async user => {
     isLoggedIn.value = !!user
     isAuthReady.value = true
 
     if (user) {
-      const { user: currentUser } = await getCurrentUserWithRole()
-      userRole.value = currentUser?.role ?? null
+      isFetchingRole.value = true
+      try {
+        const { user: currentUser } = await getCurrentUserWithRole()
+        userRole.value = currentUser?.role ?? null
+
+        if (userRole.value) {
+          navigateToDashboard(userRole.value)
+        }
+      } catch (error) {
+        console.error('Failed to get user role:', error)
+      } finally {
+        isFetchingRole.value = false
+      }
     }
   })
 })
@@ -42,10 +61,12 @@ onMounted(async () => {
       <h1 class="text-4xl font-bold mb-4">Welcome to Ajaxtreon</h1>
       <p class="text-xl mb-6">Your all-in-one platform for managing your business and tasks efficiently.</p>
 
-      <div v-if="isAuthReady" class="space-x-4">
+      <div v-if="isAuthReady">
+        <div v-if="isLoading" class="text-lg animate-pulse">Loading your dashboard...</div>
+
         <button
-          v-if="isLoggedIn"
-          @click="navigateToDashboard"
+          v-else-if="isLoggedIn"
+          @click="onClickDashboard"
           class="bg-blue-800 text-white py-2 px-6 rounded-lg shadow-md hover:bg-blue-900 transition"
         >
           Go to Dashboard

@@ -4,7 +4,7 @@ import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
 export default defineNuxtRouteMiddleware(async (to) => {
   if (process.server) return
 
-  const publicPages = ['/auth/login', '/auth/register', '/auth/register-seller']
+  const publicPages = [ '/', '/auth/login', '/auth/register', '/auth/register-seller']
   if (publicPages.includes(to.path)) return
 
   const user = await getCurrentUserWithToken()

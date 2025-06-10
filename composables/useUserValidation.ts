@@ -1,8 +1,10 @@
+import type { UserRole } from '~/types/User'
+
 export interface UserInput {
   name: string
   email: string
   password?: string
-  role: 'user' | 'admin' | 'staff' | 'manager'
+  role: UserRole
   phone?: string
   address?: string
 }

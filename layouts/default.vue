@@ -12,7 +12,13 @@ await initAuth()
 
 if (currentUser.value) {
   const { user } = await getCurrentUserWithRole()
-  userRole.value = user?.role ?? null
+  const allowedRoles = ['admin', 'seller', 'customer'] as const
+
+  if (user?.role && allowedRoles.includes(user.role as any)) {
+    userRole.value = user.role as typeof allowedRoles[number]
+  } else {
+    userRole.value = null
+  }
 }
 </script>
 

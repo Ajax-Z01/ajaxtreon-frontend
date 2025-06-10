@@ -1,5 +1,11 @@
-import { useNuxtApp } from '#app'
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, type AuthError, type User } from 'firebase/auth'
+import { useNuxtApp, useCookie } from '#app'
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  type AuthError,
+  type User,
+} from 'firebase/auth'
 import { ref } from 'vue'
 
 export const useAuth = () => {
@@ -12,6 +18,12 @@ export const useAuth = () => {
   const currentUser = useState<User | null>('currentUser', () => null)
   const authReady = useState<boolean>('authReady', () => false)
 
+  const authCookie = useCookie('auth_token', {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 7,
+  })
+
   // Inisialisasi Auth
   const initAuth = () => {
     return new Promise<void>((resolve) => {
@@ -21,11 +33,15 @@ export const useAuth = () => {
 
         if (user) {
           token.value = await user.getIdToken()
+          authCookie.value = token.value
+
           if (process.client) {
             localStorage.setItem('userToken', token.value)
           }
         } else {
           token.value = null
+          authCookie.value = null
+
           if (process.client) {
             localStorage.removeItem('userToken')
           }
@@ -49,6 +65,8 @@ export const useAuth = () => {
       currentUser.value = user
       authReady.value = true
 
+      authCookie.value = token.value
+
       if (process.client) {
         localStorage.setItem('userToken', token.value)
       }
@@ -70,6 +88,8 @@ export const useAuth = () => {
       await signOut($auth)
       currentUser.value = null
       token.value = null
+      authCookie.value = null
+
       if (process.client) {
         localStorage.removeItem('userToken')
       }
