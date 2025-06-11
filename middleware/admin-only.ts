@@ -1,24 +1,27 @@
-import { defineNuxtRouteMiddleware, navigateTo, useCookie } from '#app'
-import { getCurrentUserWithRole } from '~/composables/getCurrentUser'
+import { defineNuxtRouteMiddleware, navigateTo } from '#app'
+import { useUserStore } from '~/stores/userStore'
 
 export default defineNuxtRouteMiddleware(async () => {
-  const token = useCookie('auth_token')
-  if (!token.value) return navigateTo('/auth/login')
+  const userStore = useUserStore()
 
-  try {
-    const { user } = await getCurrentUserWithRole()
-
-    if (user?.role !== 'admin') {
-      switch (user?.role) {
-        case 'seller':
-          return navigateTo('/seller/dashboard')
-        case 'customer':
-          return navigateTo('/customer/dashboard')
-        default:
-          return navigateTo('/auth/login')
-      }
+  if (!userStore.isReady) {
+    try {
+      await userStore.fetchUser()
+    } catch {
+      return navigateTo('/auth/login')
     }
-  } catch {
-    return navigateTo('/auth/login')
+  }
+
+  if (!userStore.user) return navigateTo('/auth/login')
+
+  if (userStore.user.role !== 'admin') {
+    switch (userStore.user.role) {
+      case 'seller':
+        return navigateTo('/seller/dashboard')
+      case 'customer':
+        return navigateTo('/customer/dashboard')
+      default:
+        return navigateTo('/auth/login')
+    }
   }
 })

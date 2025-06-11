@@ -1,13 +1,33 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
 import { getCurrentUserWithRole } from '~/composables/getCurrentUser';
+import { useUserStore } from '~/stores/userStore';
 
 const { login, error, loading } = useAuth();
 const email = ref('');
 const password = ref('');
 const router = useRouter();
+const userStore = useUserStore();
+
+onMounted(async () => {
+  if (!userStore.isReady) {
+    await userStore.fetchUser();
+  }
+
+  const user = userStore.user;
+  if (user && user.role) {
+    switch (user.role) {
+      case 'admin':
+        return router.replace('/admin/dashboard');
+      case 'seller':
+        return router.replace('/seller/dashboard');
+      default:
+        return router.replace('/customer/dashboard');
+    }
+  }
+});
 
 const handleLogin = async () => {
   if (loading.value) return;
@@ -39,7 +59,6 @@ const handleLogin = async () => {
     alert('Unexpected error: ' + (e instanceof Error ? e.message : String(e)));
   }
 };
-
 </script>
 
 <template>

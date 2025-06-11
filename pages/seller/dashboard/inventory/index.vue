@@ -26,7 +26,7 @@ const goToStocks = () => router.push('inventory/stocks')
 <template>
   <div class="p-8 bg-gray-100 min-h-screen space-y-8">
     <NuxtLink
-      to="/seller/dashboard/inventory"
+      to="/seller/dashboard"
       class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
     >
       ← Back to Dashboard

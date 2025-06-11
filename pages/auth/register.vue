@@ -1,13 +1,33 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useRegister } from '~/composables/useRegister'
+import { useUserStore } from '~/stores/userStore'
 
 const email = ref('')
 const password = ref('')
 const name = ref('')
 const router = useRouter()
 const { register, registerError, loading } = useRegister()
+const userStore = useUserStore()
+
+onMounted(async () => {
+  if (!userStore.isReady) {
+    await userStore.fetchUser()
+  }
+
+  const user = userStore.user
+  if (user && user.role) {
+    switch (user.role) {
+      case 'admin':
+        return router.replace('/admin/dashboard')
+      case 'seller':
+        return router.replace('/seller/dashboard')
+      default:
+        return router.replace('/customer/dashboard')
+    }
+  }
+})
 
 const handleRegister = async () => {
   if (loading.value) return
@@ -61,7 +81,7 @@ const handleRegister = async () => {
           <button
             type="submit"
             class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-            :disabled="loading"
+            :disabled="loading.value"
           >
             Register
           </button>

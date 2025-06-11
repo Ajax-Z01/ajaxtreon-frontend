@@ -41,10 +41,6 @@ onMounted(() => {
       try {
         const { user: currentUser } = await getCurrentUserWithRole()
         userRole.value = currentUser?.role ?? null
-
-        if (userRole.value) {
-          navigateToDashboard(userRole.value)
-        }
       } catch (error) {
         console.error('Failed to get user role:', error)
       } finally {

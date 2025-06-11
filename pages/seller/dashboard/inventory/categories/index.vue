@@ -1,4 +1,7 @@
 <script setup lang="ts">
+definePageMeta({
+  middleware: ['seller-only']
+})
 import { ref, computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useCategories } from '~/composables/useCategories'
