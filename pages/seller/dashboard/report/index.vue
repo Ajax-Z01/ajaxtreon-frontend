@@ -1,7 +1,4 @@
 <script setup lang="ts">
-definePageMeta({
-  middleware: ['seller-only']
-})
 import { ref } from 'vue'
 import { useReportStore } from '~/stores/reportStore'
 import type { ReportQuery } from '~/types/Report'

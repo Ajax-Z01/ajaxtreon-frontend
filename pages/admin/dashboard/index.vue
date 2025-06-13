@@ -1,7 +1,4 @@
 <script setup>
-definePageMeta({
-  middleware: ['admin-only']
-})
 import { useRouter } from 'vue-router'
 
 const router = useRouter()

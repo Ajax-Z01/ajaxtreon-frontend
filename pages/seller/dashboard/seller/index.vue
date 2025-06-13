@@ -1,7 +1,4 @@
 <script setup lang="ts">
-definePageMeta({
-  middleware: ['seller-only']
-})
 import { ref, onMounted } from 'vue'
 import ModalCreateSeller from '~/components/modal/CreateSeller.vue'
 import ModalEditSeller from '~/components/modal/EditSeller.vue'

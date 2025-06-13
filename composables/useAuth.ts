@@ -1,115 +1,185 @@
-import { useNuxtApp, useCookie } from '#app'
-import {
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  type AuthError,
-  type User,
-} from 'firebase/auth'
 import { ref } from 'vue'
+import { useRuntimeConfig, useState, createError } from '#app'
+import { getCurrentUserWithRole } from '~/composables/getCurrentUser'
+import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import type { User } from '~/types/User'
 
 export const useAuth = () => {
-  const { $auth } = useNuxtApp()
+  const config = useRuntimeConfig()
+  const baseUrl = config.public.apiBaseUrl
 
-  const error = ref<string | null>(null)
-  const loading = ref(false)
-  const token = ref<string | null>(null)
-
-  const currentUser = useState<User | null>('currentUser', () => null)
-  const authReady = useState<boolean>('authReady', () => false)
-
-  const authCookie = useCookie('auth_token', {
-    httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24 * 7,
+  // State token di localStorage
+  const userToken = useState<string | null>('userToken', () => {
+    if (process.client) {
+      return localStorage.getItem('userToken')
+    }
+    return null
   })
 
-  // Inisialisasi Auth
-  const initAuth = () => {
-    return new Promise<void>((resolve) => {
-      onAuthStateChanged($auth, async (user) => {
-        currentUser.value = user
-        authReady.value = true
+  // currentUser pakai tipe User sesuai definisi
+  const currentUser = useState<User | null>('currentUser', () => null)
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
-        if (user) {
-          token.value = await user.getIdToken()
-          authCookie.value = token.value
-
-          if (process.client) {
-            localStorage.setItem('userToken', token.value)
-          }
-        } else {
-          token.value = null
-          authCookie.value = null
-
-          if (process.client) {
-            localStorage.removeItem('userToken')
-          }
-        }
-
-        resolve()
-      })
-    })
+  const setUserToken = (token: string | null) => {
+    userToken.value = token
+    if (process.client) {
+      if (token) localStorage.setItem('userToken', token)
+      else localStorage.removeItem('userToken')
+    }
   }
 
-  // Login
+  const getHeaders = (): HeadersInit => {
+    const headers: HeadersInit = { 'Content-Type': 'application/json' }
+    if (userToken.value) {
+      headers['Authorization'] = `Bearer ${userToken.value}`
+    }
+    return headers
+  }
+
+  // Sinkronisasi user dan token dari Firebase (mengembalikan boolean sukses)
+  const syncUserFromFirebase = async (): Promise<boolean> => {
+    try {
+      const { user, token } = await getCurrentUserWithRole()
+      console.log('[syncUserFromFirebase] user:', user)
+      if (user && token) {
+        // user.id exists as per your User interface (from Firestore doc)
+        currentUser.value = {
+          id: user.id,           // use 'id' instead of 'uid'
+          name: user.name ?? '',
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive ?? true,
+          createdAt: user.createdAt ?? new Date().toISOString(),
+          profilePictureUrl: user.profilePictureUrl,
+          phone: user.phone,
+          address: user.address,
+          updatedAt: user.updatedAt,
+          lastLoginAt: user.lastLoginAt,
+        }
+        setUserToken(token)
+        return true
+      } else {
+        currentUser.value = null
+        setUserToken(null)
+        return false
+      }
+    } catch (err) {
+      console.error('syncUserFromFirebase error:', err)
+      currentUser.value = null
+      setUserToken(null)
+      return false
+    }
+  }
+
+  const fetchCurrentUser = async () => {
+    if (!userToken.value) {
+      currentUser.value = null
+      console.log('[fetchCurrentUser] no token, user reset')
+      return
+    }
+
+    try {
+      console.log('[fetchCurrentUser] fetching user from API with token:', userToken.value)
+      const data = await $fetch<User>(`${baseUrl}/auth/me`, {
+        method: 'GET',
+        headers: getHeaders(),
+      })
+      currentUser.value = data
+      console.log('[fetchCurrentUser] got user:', data)
+    } catch (err) {
+      console.error('[fetchCurrentUser] error:', err)
+      currentUser.value = null
+      setUserToken(null)
+      throw createError({ statusCode: 401, message: 'Unauthorized' })
+    }
+  }
+
   const login = async (email: string, password: string) => {
     loading.value = true
     error.value = null
-
     try {
-      const userCredential = await signInWithEmailAndPassword($auth, email, password)
-      const user = userCredential.user
+      console.log('[useAuth] login attempt:', email)
 
-      token.value = await user.getIdToken()
-      currentUser.value = user
-      authReady.value = true
+      // Login backend dulu
+      const data = await $fetch<{ token: string; user: User }>(`${baseUrl}/auth/login`, {
+        method: 'POST',
+        body: { email, password },
+        headers: { 'Content-Type': 'application/json' },
+      })
 
-      authCookie.value = token.value
+      if (!data.token) throw new Error('Token not received')
 
-      if (process.client) {
-        localStorage.setItem('userToken', token.value)
+      // Login ke Firebase Authentication otomatis
+      const auth = getAuth()
+      await signInWithEmailAndPassword(auth, email, password)
+
+      setUserToken(data.token)
+      currentUser.value = data.user
+
+      // Sinkronisasi user dari Firebase
+      const synced = await syncUserFromFirebase().catch(() => false)
+      if (!synced) {
+        console.warn('[useAuth] syncUserFromFirebase failed, keeping backend user')
       }
+
+      console.log('[useAuth] login success, user:', currentUser.value)
     } catch (err) {
-      const authError = err as AuthError
-      error.value = authError.message || 'Unknown error occurred during login.'
-      console.error('Login error:', authError)
+      error.value = (err as Error).message || 'Login failed'
+      console.error('[useAuth] login error:', err)
     } finally {
       loading.value = false
     }
   }
 
-  // Logout
   const logout = async () => {
     loading.value = true
     error.value = null
-
     try {
-      await signOut($auth)
-      currentUser.value = null
-      token.value = null
-      authCookie.value = null
+      await $fetch(`${baseUrl}/auth/logout`, {
+        method: 'POST',
+        headers: getHeaders(),
+      })
 
-      if (process.client) {
-        localStorage.removeItem('userToken')
-      }
+      const auth = getAuth()
+      await signOut(auth)
     } catch (err) {
-      const authError = err as AuthError
-      error.value = authError.message || 'Unknown error occurred during logout.'
-      console.error('Logout error:', authError)
+      console.error('[useAuth] logout error:', err)
     } finally {
+      setUserToken(null)
+      currentUser.value = null
       loading.value = false
+      if (process.client) {
+        window.location.href = '/auth/login'
+      }
+    }
+  }
+
+  const initAuth = async () => {
+    console.log('[useAuth] initAuth start, token:', userToken.value)
+    if (userToken.value) {
+      const synced = await syncUserFromFirebase()
+      if (synced) {
+        console.log('[useAuth] initAuth success, user:', currentUser.value)
+      } else {
+        console.log('[useAuth] initAuth failed, clearing token and user')
+        setUserToken(null)
+        currentUser.value = null
+      }
+    } else {
+      console.log('[useAuth] initAuth: no token found')
     }
   }
 
   return {
-    login,
-    logout,
+    userToken,
+    currentUser,
     error,
     loading,
-    token,
-    currentUser,
-    authReady,
+    login,
+    logout,
     initAuth,
+    syncUserFromFirebase,
+    fetchCurrentUser,
   }
 }

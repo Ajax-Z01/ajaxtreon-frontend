@@ -1,7 +1,4 @@
 <script setup lang="ts">
-definePageMeta({
-  middleware: ['seller-only']
-})
 import { ref, computed, reactive } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useProducts } from '~/composables/useProducts'
@@ -92,11 +89,11 @@ const handleFileChange = async (file: File | null) => {
 
 const handleSubmit = async () => {
   try {
-    if (!currentUser.value?.uid) throw new Error('User not authenticated')
+    if (!currentUser.value?.id) throw new Error('User not authenticated')
 
     const payload = {
       ...form,
-      createdBy: currentUser.value.uid
+      createdBy: currentUser.value.id
     }
 
     if (isEditing.value && selectedProductId.value) {

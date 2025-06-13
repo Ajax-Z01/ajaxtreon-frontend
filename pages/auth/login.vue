@@ -1,64 +1,70 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuth } from '~/composables/useAuth';
-import { getCurrentUserWithRole } from '~/composables/getCurrentUser';
-import { useUserStore } from '~/stores/userStore';
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuth } from '~/composables/useAuth'
+import { getCurrentUserWithRole } from '~/composables/getCurrentUser'
+import { useUserStore } from '~/stores/userStore'
 
-const { login, error, loading } = useAuth();
-const email = ref('');
-const password = ref('');
-const router = useRouter();
-const userStore = useUserStore();
+const { login, error, loading } = useAuth()
+const email = ref('')
+const password = ref('')
+const router = useRouter()
+const userStore = useUserStore()
 
+// Cek user yang sudah login saat mounted
 onMounted(async () => {
   if (!userStore.isReady) {
-    await userStore.fetchUser();
+    await userStore.fetchUser()
   }
 
-  const user = userStore.user;
+  const user = userStore.user
   if (user && user.role) {
     switch (user.role) {
       case 'admin':
-        return router.replace('/admin/dashboard');
+        return router.replace('/admin/dashboard')
       case 'seller':
-        return router.replace('/seller/dashboard');
+        return router.replace('/seller/dashboard')
       default:
-        return router.replace('/customer/dashboard');
+        return router.replace('/customer/dashboard')
     }
   }
-});
+})
 
 const handleLogin = async () => {
-  if (loading.value) return;
+  if (loading.value) return
   try {
-    await login(email.value, password.value);
+    await login(email.value, password.value)
+    console.log('After login:', { error: error.value })
 
     if (!error.value) {
-      const { user } = await getCurrentUserWithRole();
+      // Ambil user dengan role dari Firestore menggunakan auth.currentUser
+      const { user } = await getCurrentUserWithRole()
+      console.log('User from getCurrentUserWithRole:', user)
 
       if (!user || !user.role) {
-        return router.replace('/auth/login');
+        console.log('No user or role found, redirecting to login')
+        return router.replace('/auth/login')
       }
+
+      // Simpan user ke store (opsional)
+      userStore.setUser(user)
 
       switch (user.role) {
         case 'seller':
-          router.replace('/seller/dashboard');
-          break;
+          return router.replace('/seller/dashboard')
         case 'admin':
-          router.replace('/admin/dashboard');
-          break;
+          return router.replace('/admin/dashboard')
         default:
-          router.replace('/customer/dashboard');
+          return router.replace('/customer/dashboard')
       }
     } else {
-      alert('Login failed: ' + error.value);
+      alert('Login failed: ' + error.value)
     }
   } catch (e) {
-    console.error('Unexpected error during login', e);
-    alert('Unexpected error: ' + (e instanceof Error ? e.message : String(e)));
+    console.error('Unexpected error during login', e)
+    alert('Unexpected error: ' + (e instanceof Error ? e.message : String(e)))
   }
-};
+}
 </script>
 
 <template>

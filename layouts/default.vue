@@ -5,7 +5,7 @@ import { getCurrentUserWithRole } from '@/composables/getCurrentUser'
 import { ref } from 'vue'
 
 const route = useRoute()
-const { initAuth, authReady, currentUser } = useAuth()
+const { initAuth, currentUser } = useAuth()
 const userRole = ref<'admin' | 'seller' | 'customer' | null>(null)
 const loading = ref(true)
 
@@ -34,7 +34,7 @@ initialize()
       <p>Loading authentication...</p>
     </div>
 
-    <div v-else-if="authReady">
+    <div>
       <div class="flex flex-col min-h-screen">
         <AppHeader
           :route="route"

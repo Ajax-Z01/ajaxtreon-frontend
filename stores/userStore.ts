@@ -43,5 +43,16 @@ export const useUserStore = defineStore('user', {
         })
       })
     },
+
+    setUser(user: User) {
+      this.user = user
+    },
+
+    clearUser() {
+      this.user = null
+      this.token = null
+      this.isReady = false
+      this.isFetching = false
+    },
   },
 })

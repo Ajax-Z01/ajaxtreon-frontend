@@ -27,21 +27,30 @@ export const getCurrentUserWithRole = (): Promise<{ user: User | null; token: st
   return new Promise(async (resolve, reject) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       unsubscribe()
+      console.log('Firebase User:', firebaseUser)
       if (firebaseUser) {
         try {
           const token = await firebaseUser.getIdToken(true)
+          console.log('Token:', token)
 
-          const userDoc = await getDoc(doc(firestore, 'users', firebaseUser.uid))
+          const userDocRef = doc(firestore, 'users', firebaseUser.uid)
+          console.log('Fetching userDoc:', userDocRef.path)
+          const userDoc = await getDoc(userDocRef)
+
           if (userDoc.exists()) {
             const userData = userDoc.data() as User
+            console.log('User doc data:', userData)
             resolve({ user: userData, token })
           } else {
+            console.warn('User doc does not exist for UID:', firebaseUser.uid)
             resolve({ user: null, token })
           }
         } catch (error) {
+          console.error('Error fetching user doc:', error)
           reject(error)
         }
       } else {
+        console.log('No firebase user logged in')
         resolve({ user: null, token: null })
       }
     }, reject)
