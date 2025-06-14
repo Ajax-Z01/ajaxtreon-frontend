@@ -80,10 +80,31 @@ const handleRegister = async () => {
         <div class="flex justify-between items-center">
           <button
             type="submit"
-            class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-            :disabled="loading.value"
+            class="flex items-center justify-center bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="loading"
           >
-            Register
+            <svg
+              v-if="loading"
+              class="animate-spin h-5 w-5 mr-2 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              ></path>
+            </svg>
+            <span>{{ loading ? 'Registering...' : 'Register' }}</span>
           </button>
           <router-link to="/auth/login" class="text-sm text-blue-500">Login</router-link>
         </div>

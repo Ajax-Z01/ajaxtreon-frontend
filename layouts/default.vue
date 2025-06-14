@@ -1,51 +1,36 @@
 <script setup lang="ts">
+import { useUserStore } from '~/stores/userStore'
 import { useRoute } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
-import { getCurrentUserWithRole } from '@/composables/getCurrentUser'
-import { ref } from 'vue'
 
+const userStore = useUserStore()
 const route = useRoute()
-const { initAuth, currentUser } = useAuth()
-const userRole = ref<'admin' | 'seller' | 'customer' | null>(null)
-const loading = ref(true)
 
-async function initialize() {
-  loading.value = true
-  await initAuth()
-
-  if (currentUser.value) {
-    const { user } = await getCurrentUserWithRole()
-    const allowedRoles = ['admin', 'seller', 'customer'] as const
-
-    if (user?.role && allowedRoles.includes(user.role as any)) {
-      userRole.value = user.role as typeof allowedRoles[number]
-    } else {
-      userRole.value = null
-    }
-  }
-  loading.value = false
+function mapRole(role: string | null | undefined): 'admin' | 'customer' | 'seller' | null {
+  if (role === 'admin' || role === 'seller' || role === 'customer') return role
+  return null
 }
-initialize()
 </script>
 
 <template>
-  <div>
-    <div v-if="loading" class="flex justify-center items-center h-screen">
-      <p>Loading authentication...</p>
+  <div class="flex flex-col min-h-screen">
+    <div v-if="!userStore.isReady" class="flex flex-col justify-center items-center h-screen bg-white">
+      <svg class="animate-spin h-10 w-10 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+      </svg>
+      <p class="text-gray-600 text-lg">Loading Page...</p>
     </div>
 
-    <div>
-      <div class="flex flex-col min-h-screen">
-        <AppHeader
-          :route="route"
-          :isAuthenticated="!!currentUser"
-          :role="userRole"
-        />
-        <main class="flex-grow bg-gray-50">
-          <NuxtPage />
-        </main>
-        <AppFooter />
-      </div>
-    </div>
+    <template v-else>
+      <AppHeader
+        :route="route"
+        :isAuthenticated="!!userStore.user"
+        :role="mapRole(userStore.user?.role)"
+      />
+      <main class="flex-grow bg-gray-50">
+        <NuxtPage />
+      </main>
+      <AppFooter />
+    </template>
   </div>
 </template>

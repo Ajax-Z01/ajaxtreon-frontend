@@ -1,8 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '~/composables/useAuth'
-import { getCurrentUserWithRole } from '~/composables/getCurrentUser'
 import { useUserStore } from '~/stores/userStore'
 
 const { login, error, loading } = useAuth()
@@ -11,7 +10,6 @@ const password = ref('')
 const router = useRouter()
 const userStore = useUserStore()
 
-// Cek user yang sudah login saat mounted
 onMounted(async () => {
   if (!userStore.isReady) {
     await userStore.fetchUser()
@@ -33,38 +31,30 @@ onMounted(async () => {
 const handleLogin = async () => {
   if (loading.value) return
   try {
-    await login(email.value, password.value)
-    console.log('After login:', { error: error.value })
+    const { role, error: loginError } = await login(email.value, password.value)
 
-    if (!error.value) {
-      // Ambil user dengan role dari Firestore menggunakan auth.currentUser
-      const { user } = await getCurrentUserWithRole()
-      console.log('User from getCurrentUserWithRole:', user)
+    console.log('Login result:', { role, loginError })
 
-      if (!user || !user.role) {
-        console.log('No user or role found, redirecting to login')
-        return router.replace('/auth/login')
-      }
+    if (!loginError && role) {
+      await nextTick()
 
-      // Simpan user ke store (opsional)
-      userStore.setUser(user)
-
-      switch (user.role) {
-        case 'seller':
-          return router.replace('/seller/dashboard')
+      switch (role) {
         case 'admin':
           return router.replace('/admin/dashboard')
+        case 'seller':
+          return router.replace('/seller/dashboard')
         default:
           return router.replace('/customer/dashboard')
       }
     } else {
-      alert('Login failed: ' + error.value)
+      alert('Login failed: ' + loginError)
     }
   } catch (e) {
     console.error('Unexpected error during login', e)
     alert('Unexpected error: ' + (e instanceof Error ? e.message : String(e)))
   }
 }
+
 </script>
 
 <template>
@@ -95,10 +85,31 @@ const handleLogin = async () => {
         <div class="flex justify-between items-center">
           <button
             type="submit"
-            class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-            :disabled="loading.value"
+            class="flex items-center justify-center bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="loading"
           >
-            Login
+            <svg
+              v-if="loading"
+              class="animate-spin h-5 w-5 mr-2 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              ></path>
+            </svg>
+            <span>{{ loading ? 'Logging in...' : 'Login' }}</span>
           </button>
           <router-link to="/auth/register" class="text-sm text-blue-500">Register</router-link>
         </div>
