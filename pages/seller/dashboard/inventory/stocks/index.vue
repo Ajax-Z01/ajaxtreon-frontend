@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
+import { useAuth } from '~/composables/useAuth'
 import { useStocks } from '~/composables/useStocks'
 import { useProducts } from '~/composables/useProducts'
+import type { Product } from '~/types/Product'
 
 const { getStocks, addStock, subtractStock, getStockHistory } = useStocks()
 const { getProducts } = useProducts()
+const { currentUser } = useAuth()
 
 // Fetch stocks & products with SSR support
 const { data: stocksData, refresh: refreshStocks, pending: loadingStocks } = await useAsyncData('stocks', getStocks)
-const { data: productsData, refresh: refreshProducts } = await useAsyncData('products', getProducts)
+const { data: productsData, pending: loading, refresh } = await useAsyncData<Product[]>(
+  'products',
+  () => getProducts(currentUser.value?.id),
+  { watch: [() => currentUser.value?.id] }
+)
 
 const processing = ref(false)
 const isHistoryModalOpen = ref(false)

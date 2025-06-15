@@ -1,14 +1,23 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuth } from '~/composables/useAuth'
 import { useProducts } from '~/composables/useProducts'
 import { useCategories } from '~/composables/useCategories'
 
 const router = useRouter()
+const { currentUser } = useAuth()
 const { getProducts } = useProducts()
 const { getCategories } = useCategories()
 
-const { data: products = ref([]) } = useAsyncData('products', getProducts, { default: () => [] })
+const { data: products = ref([]) } = await useAsyncData(
+  'products',
+  () => getProducts(currentUser.value?.id),
+  {
+    default: () => [],
+    watch: [() => currentUser.value?.id],
+  }
+)
 const { data: categories = ref([]) } = useAsyncData('categories', getCategories, { default: () => [] })
 
 const stats = computed(() => [

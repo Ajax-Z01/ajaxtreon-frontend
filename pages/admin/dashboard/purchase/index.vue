@@ -12,7 +12,7 @@ const { getProducts } = useProducts()
 const { getUsers } = useUsers()
 
 const { data: purchases = ref([]), pending: loading, refresh } = useAsyncData<Purchase[]>('purchases', getPurchases, { default: () => [] })
-const { data: products = ref([]) } = useAsyncData<Product[]>('products', getProducts, { default: () => [] })
+const { data: products = ref([]) } = useAsyncData('products', () => getProducts(), { default: () => [] })
 const users = ref<User[]>([])
 
 onMounted(async () => {

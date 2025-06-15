@@ -48,9 +48,10 @@ export const useProducts = () => {
   }
 
   // GET: All Products
-  const getProducts = async (): Promise<Product[]> => {
+  const getProducts = async (createdBy?: string): Promise<Product[]> => {
     try {
-      const { data, error } = await useFetch<Product[]>(`${baseUrl}/inventory/product`, {
+      const queryParam = createdBy ? `?createdBy=${encodeURIComponent(createdBy)}` : ''
+      const { data, error } = await useFetch<Product[]>(`${baseUrl}/inventory/product${queryParam}`, {
         method: 'GET',
         headers: getHeaders(),
       })

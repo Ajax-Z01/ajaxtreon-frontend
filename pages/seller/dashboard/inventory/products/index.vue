@@ -14,7 +14,11 @@ const { getCategories } = useCategories()
 const { currentUser } = useAuth()
 const { uploadImage } = useCloudinaryUploader()
 
-const { data: products, pending: loading, refresh } = await useAsyncData<Product[]>('products', () => getProducts())
+const { data: products, pending: loading, refresh } = await useAsyncData<Product[]>(
+  'products',
+  () => getProducts(currentUser.value?.id),
+  { watch: [() => currentUser.value?.id] }
+)
 const { data: categories, pending: loadingCategories } = await useAsyncData<Category[]>('categories', () => getCategories())
 
 const isFormOpen = ref(false)

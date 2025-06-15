@@ -8,8 +8,8 @@ const router = useRouter()
 const { getProducts } = useProducts()
 const { getCategories } = useCategories()
 
-const { data: products = ref([]) } = useAsyncData('products', getProducts, { default: () => [] })
-const { data: categories = ref([]) } = useAsyncData('categories', getCategories, { default: () => [] })
+const { data: products = ref([]) } = useAsyncData('products', () => getProducts(), { default: () => [] })
+const { data: categories = ref([]) } = useAsyncData('categories', () => getCategories(), { default: () => [] })
 
 const stats = computed(() => [
   { label: 'Products', value: products.value.length },
@@ -59,6 +59,7 @@ const goToStocks = () => router.push('inventory/stocks')
             <div>
               <div class="font-medium text-gray-900">{{ product.name }}</div>
               <div class="text-sm text-gray-500">#{{ product.id }}</div>
+              <div class="text-sm text-gray-400">By {{ product.createdBy }}</div>
             </div>
             <div class="bg-blue-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">
               {{ product.stock }}
