@@ -19,7 +19,7 @@ const editingCategoryId = ref<string | null>(null)
 const editedCategoryName = ref('')
 const editedCategoryDescription = ref('')
 
-const currentUserId = computed(() => currentUser.value?.id || null)
+const currentUserId = computed(() => currentUser.value?.user?.uid || null)
 
 const addNewCategory = async (event: Event) => {
   event.preventDefault()

@@ -16,9 +16,16 @@ const { uploadImage } = useCloudinaryUploader()
 
 const { data: products, pending: loading, refresh } = await useAsyncData<Product[]>(
   'products',
-  () => getProducts(currentUser.value?.id),
-  { watch: [() => currentUser.value?.id] }
+  async () => {
+    if (!currentUser.value?.user?.uid) return []
+    return await getProducts(currentUser.value.user.uid)
+  },
+  {
+    watch: [() => currentUser.value?.user?.uid],
+    default: () => []
+  }
 )
+
 const { data: categories, pending: loadingCategories } = await useAsyncData<Category[]>('categories', () => getCategories())
 
 const isFormOpen = ref(false)
@@ -93,11 +100,11 @@ const handleFileChange = async (file: File | null) => {
 
 const handleSubmit = async () => {
   try {
-    if (!currentUser.value?.id) throw new Error('User not authenticated')
+    if (!currentUser.value?.user?.uid) throw new Error('User not authenticated')
 
     const payload = {
       ...form,
-      createdBy: currentUser.value.id
+      createdBy: currentUser.value.user.uid
     }
 
     if (isEditing.value && selectedProductId.value) {

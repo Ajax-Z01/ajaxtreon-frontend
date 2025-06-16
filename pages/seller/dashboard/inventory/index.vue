@@ -3,29 +3,28 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '~/composables/useAuth'
 import { useProducts } from '~/composables/useProducts'
-import { useCategories } from '~/composables/useCategories'
 
 const router = useRouter()
 const { currentUser } = useAuth()
 const { getProducts } = useProducts()
-const { getCategories } = useCategories()
 
-const { data: products = ref([]) } = await useAsyncData(
+const { data: products, pending: loading, refresh } = await useAsyncData<Product[]>(
   'products',
-  () => getProducts(currentUser.value?.id),
+  async () => {
+    if (!currentUser.value?.user?.uid) return []
+    return await getProducts(currentUser.value.user.uid)
+  },
   {
-    default: () => [],
-    watch: [() => currentUser.value?.id],
+    watch: [() => currentUser.value?.user?.uid],
+    default: () => []
   }
 )
-const { data: categories = ref([]) } = useAsyncData('categories', getCategories, { default: () => [] })
 
 const stats = computed(() => [
-  { label: 'Products', value: products.value.length },
-  { label: 'Categories', value: categories.value.length }
+  { label: 'Products', value: products.value?.length || 0 }
 ])
 
-const recentProducts = computed(() => products.value.slice(0, 5))
+const recentProducts = computed(() => products.value?.slice(0, 5) || [])
 
 const goToProducts = () => router.push('inventory/products')
 const goToCategories = () => router.push('inventory/categories')
@@ -85,12 +84,6 @@ const goToStocks = () => router.push('inventory/stocks')
         class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition"
       >
         Manage Products
-      </button>
-      <button
-        @click="goToCategories"
-        class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition"
-      >
-        Manage Categories
       </button>
       <button
         @click="goToStocks"

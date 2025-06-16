@@ -13,8 +13,8 @@ const { currentUser } = useAuth()
 const { data: stocksData, refresh: refreshStocks, pending: loadingStocks } = await useAsyncData('stocks', getStocks)
 const { data: productsData, pending: loading, refresh } = await useAsyncData<Product[]>(
   'products',
-  () => getProducts(currentUser.value?.id),
-  { watch: [() => currentUser.value?.id] }
+  () => getProducts(currentUser.value?.user?.uid),
+  { watch: [() => currentUser.value?.user?.uid] }
 )
 
 const processing = ref(false)
