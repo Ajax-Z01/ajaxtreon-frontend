@@ -7,26 +7,38 @@ import { useCloudinaryUploader } from '~/composables/useCloudinaryUploader'
 import AddProductModal from '~/components/modal/CreateProduct.vue'
 import EditProductModal from '~/components/modal/EditProduct.vue'
 import type { Product, CreateProductPayload, UpdateProductPayload } from '~/types/Product'
-import type { Category } from '~/types/Category'
+import AppProductCard from '~/components/card/AppProductCard.vue'
 
 const { getProducts, addProduct, updateProduct, deleteProduct } = useProducts()
 const { getCategories } = useCategories()
 const { currentUser } = useAuth()
 const { uploadImage } = useCloudinaryUploader()
 
-const { data: products, pending: loading, refresh } = await useAsyncData<Product[]>(
-  'products',
+const userId = computed(() => currentUser.value?.user?.uid ?? '')
+
+const { data: allData, pending: loadingAll, refresh, execute } = useLazyAsyncData(
+  'products-categories',
   async () => {
-    if (!currentUser.value?.user?.uid) return []
-    return await getProducts(currentUser.value.user.uid)
+    const [productsRes, categoriesRes] = await Promise.all([
+      getProducts(userId.value),
+      getCategories()
+    ])
+    return { products: productsRes, categories: categoriesRes }
   },
   {
-    watch: [() => currentUser.value?.user?.uid],
-    default: () => []
+    default: () => ({ products: [], categories: [] })
   }
 )
 
-const { data: categories, pending: loadingCategories } = await useAsyncData<Category[]>('categories', () => getCategories())
+watch(userId, (id) => {
+  if (id) execute()
+}, { immediate: true })
+
+const products = computed(() => allData.value?.products ?? [])
+const categories = computed(() => allData.value?.categories ?? [])
+
+const loading = loadingAll
+const loadingCategories = loadingAll
 
 const isFormOpen = ref(false)
 const isEditing = ref(false)
@@ -100,11 +112,11 @@ const handleFileChange = async (file: File | null) => {
 
 const handleSubmit = async () => {
   try {
-    if (!currentUser.value?.user?.uid) throw new Error('User not authenticated')
+    if (!userId.value) throw new Error('User not authenticated')
 
     const payload = {
       ...form,
-      createdBy: currentUser.value.user.uid
+      createdBy: userId.value
     }
 
     if (isEditing.value && selectedProductId.value) {
@@ -148,11 +160,13 @@ const confirmDelete = async (id: string) => {
     <h1 class="text-3xl font-bold mb-6">Product Management</h1>
 
     <!-- Add Product Button -->
-    <div class="mb-8">
-      <button @click="openAddForm" class="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
-        Add New Product
-      </button>
-    </div>
+    <button
+      @click="openAddForm"
+      :disabled="loadingAll"
+      class="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+    >
+      Add New Product
+    </button>
 
     <!-- Loading State -->
     <div v-if="loading">
@@ -169,62 +183,21 @@ const confirmDelete = async (id: string) => {
     </div>
 
     <!-- No Products or Categories State -->
-    <div v-else-if="!products || products.length === 0 || !categories">
+    <div v-else-if="!products?.length || !categories?.length">
       <div class="text-gray-500">No products available or categories not loaded.</div>
     </div>
 
     <!-- Product List -->
     <div v-else>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
+        <AppProductCard
           v-for="product in products ?? []"
           :key="product.id"
-          class="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition"
-        >
-          <div class="flex items-center justify-between">
-            <h3 class="text-xl font-bold truncate">{{ product.name }}</h3>
-            <span
-              class="px-2 py-0.5 text-xs rounded-full"
-              :class="product.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'"
-            >
-              {{ product.isActive ? 'Active' : 'Inactive' }}
-            </span>
-          </div>
-
-          <div class="mt-2 h-40 flex items-center justify-center overflow-hidden bg-gray-50 rounded">
-            <img
-              v-if="product.imageUrl"
-              :src="product.imageUrl"
-              alt="Product image"
-              class="object-cover h-full w-full"
-            />
-            <div v-else class="text-gray-400 text-sm">No Image</div>
-          </div>
-
-          <div class="mt-3 space-y-1 text-sm">
-            <div><strong>Price:</strong> ${{ product.price }}</div>
-            <div><strong>Stock:</strong> {{ product.stock }}</div>
-            <div><strong>SKU:</strong> {{ product.sku || '-' }}</div>
-            <div><strong>Category:</strong> 
-              {{ categories.find(c => c.id === product.categoryId)?.name || '-' }}
-            </div>
-          </div>
-
-          <div class="mt-4 flex gap-2 justify-end">
-            <button
-              @click="openEditForm(product)"
-              class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-            >
-              Edit
-            </button>
-            <button
-              @click="confirmDelete(product.id)"
-              class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
+          :product="product"
+          :categories="categories ?? []"
+          @edit="openEditForm"
+          @delete="confirmDelete"
+        />
       </div>
     </div>
 
