@@ -89,7 +89,7 @@ const handleFileChange = async (file: File | null) => {
 
 const handleSubmit = async () => {
   try {
-    if (!currentUser.value?.user?.uid) throw new Error('User not authenticated')
+    if (!currentUser.value?.id) throw new Error('User not authenticated')
 
     const payload = {
       ...form,

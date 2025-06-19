@@ -4,12 +4,14 @@ import { useAuth } from '~/composables/useAuth'
 import { useStocks } from '~/composables/useStocks'
 import { useProducts } from '~/composables/useProducts'
 import type { Product } from '~/types/Product'
+import { useToast } from '~/composables/useToast'
 
 const { getStocks, addStock, subtractStock, getStockHistory } = useStocks()
 const { getProducts } = useProducts()
 const { currentUser } = useAuth()
+const { addToast } = useToast()
 
-const userId = computed(() => currentUser.value?.user?.uid ?? '')
+const userId = computed(() => currentUser.value?.id ?? '')
 
 const products = ref<Product[]>([])
 const stocks = ref<any[]>([])
@@ -94,10 +96,10 @@ const handleAddStock = async (e: Event) => {
     await addStock(addStockForm.productId, addStockForm.quantity, addStockForm.note)
     await fetchStocks()
     resetAddForm()
-    // TODO: show success toast
+    addToast('Stock added successfully', 'success')
   } catch (error) {
     console.error('Error adding stock:', error)
-    // TODO: show error toast
+    addToast('Failed to add stock', 'error')
   } finally {
     processing.value = false
   }
@@ -111,10 +113,10 @@ const handleSubtractStock = async (e: Event) => {
     await subtractStock(subtractStockForm.productId, subtractStockForm.quantity, subtractStockForm.note)
     await fetchStocks()
     resetSubtractForm()
-    // TODO: show success toast
+    addToast('Stock subtracted successfully', 'success')
   } catch (error) {
     console.error('Error subtracting stock:', error)
-    // TODO: show error toast
+    addToast('Failed to subtract stock', 'error')
   } finally {
     processing.value = false
   }
@@ -134,6 +136,7 @@ const viewStockChangeHistory = async (productId: string) => {
     isHistoryModalOpen.value = true
   } catch (error) {
     console.error('Error fetching stock history:', error)
+    addToast('Failed to load stock history', 'error')
   }
 }
 

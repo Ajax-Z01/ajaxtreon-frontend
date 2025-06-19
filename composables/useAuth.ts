@@ -44,9 +44,8 @@ export const useAuth = () => {
       const { user, token } = await getCurrentUserWithRole()
       console.log('[syncUserFromFirebase] user:', user)
       if (user && token) {
-        // user.id exists as per your User interface (from Firestore doc)
         currentUser.value = {
-          id: user.id,           // use 'id' instead of 'uid'
+          id: user.id,
           name: user.name ?? '',
           email: user.email,
           role: user.role,
@@ -76,20 +75,29 @@ export const useAuth = () => {
   const fetchCurrentUser = async () => {
     if (!userToken.value) {
       currentUser.value = null
-      console.log('[fetchCurrentUser] no token, user reset')
       return
     }
 
     try {
-      console.log('[fetchCurrentUser] fetching user from API with token:', userToken.value)
-      const data = await $fetch<User>(`${baseUrl}/auth/me`, {
+      const data = await $fetch<{ user: any }>(`${baseUrl}/auth/me`, {
         method: 'GET',
         headers: getHeaders(),
       })
-      currentUser.value = data
-      console.log('[fetchCurrentUser] got user:', data)
+
+      if (data?.user) {
+        const u = data.user
+        currentUser.value = {
+          id: u.uid,
+          name: u.name ?? '',
+          email: u.email ?? '',
+          role: u.role ?? 'user',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        }
+      } else {
+        currentUser.value = null
+      }
     } catch (err) {
-      console.error('[fetchCurrentUser] error:', err)
       currentUser.value = null
       setUserToken(null)
       throw createError({ statusCode: 401, message: 'Unauthorized' })

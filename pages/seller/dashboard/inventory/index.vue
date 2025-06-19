@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '~/composables/useAuth'
 import { useProducts } from '~/composables/useProducts'
+import type { Product } from '~/types/Product'
 
 const router = useRouter()
 const { currentUser } = useAuth()
@@ -11,11 +12,11 @@ const { getProducts } = useProducts()
 const { data: products, pending: loading, refresh } = await useAsyncData<Product[]>(
   'products',
   async () => {
-    if (!currentUser.value?.user?.uid) return []
-    return await getProducts(currentUser.value.user.uid)
+    if (!currentUser.value?.id) return []
+    return await getProducts(currentUser.value.id)
   },
   {
-    watch: [() => currentUser.value?.user?.uid],
+    watch: [() => currentUser.value?.id],
     default: () => []
   }
 )

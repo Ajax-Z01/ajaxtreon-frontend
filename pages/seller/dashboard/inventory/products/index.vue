@@ -8,13 +8,15 @@ import AddProductModal from '~/components/modal/CreateProduct.vue'
 import EditProductModal from '~/components/modal/EditProduct.vue'
 import type { Product, CreateProductPayload, UpdateProductPayload } from '~/types/Product'
 import AppProductCard from '~/components/card/AppProductCard.vue'
+import { useToast } from '~/composables/useToast'
 
 const { getProducts, addProduct, updateProduct, deleteProduct } = useProducts()
 const { getCategories } = useCategories()
 const { currentUser } = useAuth()
 const { uploadImage } = useCloudinaryUploader()
+const { addToast } = useToast()
 
-const userId = computed(() => currentUser.value?.user?.uid ?? '')
+const userId = computed(() => currentUser.value?.id ?? '')
 
 const { data: allData, pending: loadingAll, refresh, execute } = useLazyAsyncData(
   'products-categories',
@@ -103,8 +105,10 @@ const handleFileChange = async (file: File | null) => {
   try {
     const url = await uploadImage(file)
     form.imageUrl = url
+    addToast('Image uploaded successfully', 'success')
   } catch (error) {
     uploadError.value = (error as Error).message || 'Upload failed'
+    addToast(uploadError.value, 'error')
   } finally {
     isUploading.value = false
   }
@@ -121,14 +125,18 @@ const handleSubmit = async () => {
 
     if (isEditing.value && selectedProductId.value) {
       await updateProduct(selectedProductId.value, payload as UpdateProductPayload)
+      addToast('Product updated successfully', 'success')
     } else {
       await addProduct(payload as CreateProductPayload)
+      addToast('Product added successfully', 'success')
     }
 
     await refresh()
     isFormOpen.value = false
   } catch (error) {
-    console.error('Submit error:', error)
+    const msg = (error as Error).message || 'Submit failed'
+    console.error('Submit error:', msg)
+    addToast(msg, 'error')
   }
 }
 
@@ -136,8 +144,11 @@ const handleDelete = async (id: string) => {
   try {
     await deleteProduct(id)
     await refresh()
+    addToast('Product deleted successfully', 'success')
   } catch (error) {
-    console.error('Error deleting product:', error)
+    const msg = (error as Error).message || 'Delete failed'
+    console.error('Error deleting product:', msg)
+    addToast(msg, 'error')
   }
 }
 
