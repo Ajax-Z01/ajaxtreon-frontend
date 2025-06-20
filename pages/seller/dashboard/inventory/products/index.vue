@@ -174,7 +174,7 @@ const confirmDelete = async (id: string) => {
     <button
       @click="openAddForm"
       :disabled="loadingAll"
-      class="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+      class="p-3 mb-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
     >
       Add New Product
     </button>

@@ -36,7 +36,6 @@ const stats = computed(() => {
 const recentProducts = computed(() => products.value?.slice(0, 5) || [])
 
 const goToProducts = () => router.push('inventory/products')
-const goToCategories = () => router.push('inventory/categories')
 const goToStocks = () => router.push('inventory/stocks')
 </script>
 

@@ -3,20 +3,62 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProducts } from '~/composables/useProducts'
 import { useCategories } from '~/composables/useCategories'
+import { useAuth } from '~/composables/useAuth'
 
 const router = useRouter()
 const { getProducts } = useProducts()
 const { getCategories } = useCategories()
+const { currentUser } = useAuth()
 
-const { data: products = ref([]) } = useAsyncData('products', () => getProducts(), { default: () => [] })
-const { data: categories = ref([]) } = useAsyncData('categories', () => getCategories(), { default: () => [] })
+const { data: allData, pending: loadingAll, refresh, execute } = await useLazyAsyncData(
+  'products-categories',
+  async () => {
+    const [productsRes, categoriesRes] = await Promise.all([
+      getProducts(),
+      getCategories()
+    ])
+    return { products: productsRes, categories: categoriesRes }
+  },
+  {
+    watch: [() => currentUser.value?.id],
+    default: () => ({ products: [], categories: [] })
+  }
+)
 
-const stats = computed(() => [
-  { label: 'Products', value: products.value.length },
-  { label: 'Categories', value: categories.value.length }
-])
+const products = computed(() => allData.value?.products ?? [])
+const categories = computed(() => allData.value?.categories ?? [])
 
-const recentProducts = computed(() => products.value.slice(0, 5))
+const stats = computed(() => {
+  const total = products.value.length
+  const active = products.value.filter(p => p.isActive).length
+  const inactive = total - active
+
+  return [
+    { label: 'Products', value: total, icon: '📦' },
+    { label: 'Categories', value: categories.value.length, icon: '🗂️' },
+    { label: 'Active Products', value: active, icon: '✅' },
+    { label: 'Inactive Products', value: inactive, icon: '❌' }
+  ]
+})
+
+const recentProducts = computed(() =>
+  [...products.value]
+    .filter(p => p.createdAt && '_seconds' in p.createdAt)
+    .sort((a, b) => {
+      const aTime = (a.createdAt as any)._seconds ?? 0
+      const bTime = (b.createdAt as any)._seconds ?? 0
+      return bTime - aTime
+    })
+    .slice(0, 5)
+    .map(p => ({
+      ...p,
+      formattedPrice: p.price.toLocaleString('id-ID')
+    }))
+)
+
+const categoryMap = computed(() =>
+  Object.fromEntries(categories.value.map(c => [c.id, c.name]))
+)
 
 const goToProducts = () => router.push('inventory/products')
 const goToCategories = () => router.push('inventory/categories')
@@ -24,45 +66,94 @@ const goToStocks = () => router.push('inventory/stocks')
 </script>
 
 <template>
-  <div class="p-8 bg-gray-100 min-h-screen space-y-8">
-    <NuxtLink
-      to="/admin/dashboard"
-      class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
-    >
-      ← Back to Dashboard
-    </NuxtLink>
-    
-    <h1 class="text-3xl font-bold mb-2">Inventory Management</h1>
-
-    <!-- Statistik -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div
-        v-for="stat in stats"
-        :key="stat.label"
-        class="bg-white p-6 rounded-lg shadow text-center border border-gray-200"
-      >
-        <div class="text-4xl font-extrabold text-blue-600">{{ stat.value }}</div>
-        <div class="mt-1 text-gray-700 text-lg font-medium">{{ stat.label }}</div>
+  <div v-if="loadingAll" class="p-8 bg-gray-50 min-h-screen space-y-10">
+    <div class="h-10 w-40 bg-gray-200 rounded animate-pulse mb-4"></div>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div v-for="n in 4" :key="n" class="bg-white p-6 rounded-lg shadow border border-gray-200 animate-pulse space-y-2">
+        <div class="h-10 w-10 bg-gray-300 rounded"></div>
+        <div class="h-6 bg-gray-200 rounded w-3/4"></div>
+        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
       </div>
     </div>
 
-    <!-- Recent Products -->
     <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
+      <div class="h-6 bg-gray-300 rounded w-1/3 mb-4 animate-pulse"></div>
+      <ul class="space-y-4">
+        <li v-for="n in 3" :key="n" class="flex items-center gap-4 animate-pulse">
+          <div class="w-16 h-16 bg-gray-200 rounded"></div>
+          <div class="flex-1 space-y-2">
+            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div class="h-3 bg-gray-100 rounded w-2/3"></div>
+            <div class="h-3 bg-gray-100 rounded w-1/4"></div>
+          </div>
+          <div class="flex flex-col items-end space-y-2">
+            <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
+            <div class="h-4 w-16 bg-gray-100 rounded-full"></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+  
+  <div v-else class="p-8 bg-gray-50 min-h-screen space-y-10">
+    <NuxtLink
+      to="/admin/dashboard"
+      class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
+    >
+      ← Back to Dashboard
+    </NuxtLink>
+
+    <h1 class="text-3xl font-bold text-gray-800">Inventory Management</h1>
+
+    <!-- Statistik -->
+   <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div
+        v-for="stat in stats"
+        :key="stat.label"
+        class="bg-white p-6 rounded-lg shadow border border-gray-200 flex items-center justify-between"
+      >
+        <div class="text-4xl">{{ stat.icon }}</div>
+        <div class="text-right">
+          <div class="text-4xl font-extrabold text-blue-600">{{ stat.value }}</div>
+          <div class="mt-1 text-gray-700 text-lg font-medium">{{ stat.label }}</div>
+        </div>
+      </div>
+     </div>
+
+     <!-- Produk Terbaru -->
+     <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
       <h2 class="text-xl font-semibold mb-4 text-gray-800">Recent Products</h2>
       <div v-if="recentProducts.length > 0">
         <ul class="divide-y divide-gray-200">
           <li
             v-for="product in recentProducts"
             :key="product.id"
-            class="py-3 flex justify-between items-center"
+            class="py-4 flex items-center gap-4"
+            :class="{ 'opacity-50': !product.isActive }"
           >
-            <div>
-              <div class="font-medium text-gray-900">{{ product.name }}</div>
-              <div class="text-sm text-gray-500">#{{ product.id }}</div>
+            <img
+              :src="product.imageUrl"
+              class="w-16 h-16 object-cover rounded border border-gray-300"
+              alt="Product image"
+            />
+            <div class="flex-1">
+              <div class="text-lg font-semibold text-gray-900">{{ product.name }}</div>
+              <div class="text-sm text-gray-500">
+                SKU: {{ product.sku }} • Price: Rp{{ product.price.toLocaleString() }} <br />
+                Category: {{ categoryMap[product.categoryId] || 'Unknown' }}
+              </div>
               <div class="text-sm text-gray-400">By {{ product.createdBy }}</div>
             </div>
-            <div class="bg-blue-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">
-              {{ product.stock }}
+            <div class="flex flex-col items-end space-y-1">
+              <span
+                class="text-sm font-semibold px-3 py-1 rounded-full"
+                :class="product.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'"
+              >
+                {{ product.isActive ? 'Active' : 'Inactive' }}
+              </span>
+              <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                Stock: {{ product.stock }}
+              </span>
             </div>
           </li>
         </ul>
@@ -70,25 +161,25 @@ const goToStocks = () => router.push('inventory/stocks')
       <div v-else class="text-gray-400 text-center py-4">No products available.</div>
     </div>
 
-    <!-- Navigasi Aksi -->
-    <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
+    <!-- Aksi Navigasi -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <button
         @click="goToProducts"
-        class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition"
+        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition text-center w-full"
       >
-        Manage Products
+        📦 Manage Products
       </button>
       <button
         @click="goToCategories"
-        class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition"
+        class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition text-center w-full"
       >
-        Manage Categories
+        🗂️ Manage Categories
       </button>
       <button
         @click="goToStocks"
-        class="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition"
+        class="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition text-center w-full"
       >
-        Manage Stocks
+        📊 Manage Stocks
       </button>
     </div>
   </div>
