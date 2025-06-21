@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { watch, ref } from 'vue'
 import type { UpdateProductPayload } from '~/types/Product'
 import type { Category } from '~/types/Category'
 import { useCloudinaryUploader } from '~/composables/useCloudinaryUploader'
+import { Pencil, X, UploadCloud } from 'lucide-vue-next'
 
 const props = defineProps<{
   form: UpdateProductPayload
@@ -51,60 +52,81 @@ const submit = () => {
   >
     <div class="flex items-center justify-center min-h-screen px-4 py-6">
       <div
-        class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-auto p-6"
+        class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-auto p-6 relative"
       >
-        <h2 class="text-xl font-bold mb-4">Update Product</h2>
-        
+        <!-- Tombol Close di kanan atas -->
+        <button
+          @click="emit('close')"
+          class="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          aria-label="Close"
+        >
+          <X class="w-5 h-5" />
+        </button>
+
+        <!-- Judul dengan ikon -->
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-gray-900">
+          <Pencil class="w-6 h-6 text-blue-600" />
+          Update Product
+        </h2>
+
         <form @submit.prevent="submit" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium mb-1">Name</label>
-                <input v-model="form.name" type="text" class="w-full border rounded px-3 py-2" required />
-            </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Name</label>
+            <input v-model="localForm.name" type="text" class="w-full border rounded px-3 py-2" required />
+          </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">Price</label>
-                <input v-model.number="form.price" type="number" class="w-full border rounded px-3 py-2" required />
-            </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Price</label>
+            <input v-model.number="localForm.price" type="number" class="w-full border rounded px-3 py-2" required />
+          </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">Stock</label>
-                <input v-model.number="form.stock" type="number" class="w-full border rounded px-3 py-2" required />
-            </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Stock</label>
+            <input v-model.number="localForm.stock" type="number" class="w-full border rounded px-3 py-2" required />
+          </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">SKU</label>
-                <input v-model="form.sku" type="text" class="w-full border rounded px-3 py-2" />
-            </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">SKU</label>
+            <input v-model="localForm.sku" type="text" class="w-full border rounded px-3 py-2" />
+          </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">Description</label>
-                <textarea v-model="form.description" class="w-full border rounded px-3 py-2"></textarea>
-            </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Description</label>
+            <textarea v-model="localForm.description" class="w-full border rounded px-3 py-2"></textarea>
+          </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">Product Image</label>
-                <input type="file" accept="image/*" @change="(e) => handleFileChange((e.target as HTMLInputElement).files?.[0]!)" class="mb-2" />
-                <div v-if="isUploading" class="text-sm text-blue-600 mb-2">Uploading image...</div>
-                <div v-if="uploadError" class="text-sm text-red-600 mb-2">{{ uploadError }}</div>
-                <div v-if="form.imageUrl" class="mb-2">
-                    <img :src="form.imageUrl" alt="Uploaded Image" class="max-h-40 rounded border" />
-                </div>
-                <input v-model="form.imageUrl" type="text" readonly class="w-full border rounded px-3 py-2 bg-gray-100" />
+          <div>
+            <label class="text-sm font-medium mb-1 flex items-center gap-1">
+              <UploadCloud class="w-4 h-4 text-blue-600" />
+              Product Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              @change="(e) => handleFileChange((e.target as HTMLInputElement).files?.[0]!)"
+              class="mb-2"
+            />
+            <div v-if="isUploading" class="text-sm text-blue-600 mb-2">Uploading image...</div>
+            <div v-if="uploadError" class="text-sm text-red-600 mb-2">{{ uploadError }}</div>
+            <div v-if="localForm.imageUrl" class="mb-2">
+              <img :src="localForm.imageUrl" alt="Uploaded Image" class="max-h-40 rounded border" />
             </div>
+            <input v-model="localForm.imageUrl" type="text" readonly class="w-full border rounded px-3 py-2 bg-gray-100" />
+          </div>
 
-            <div class="flex items-center gap-2">
-                <input v-model="form.isActive" type="checkbox" id="isActive" />
-                <label for="isActive" class="text-sm font-medium">Active</label>
-            </div>
+          <div class="flex items-center gap-2">
+            <input v-model="localForm.isActive" type="checkbox" id="isActive" />
+            <label for="isActive" class="text-sm font-medium">Active</label>
+          </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">Category</label>
-                <select v-model="form.categoryId" class="w-full border rounded px-3 py-2" required>
-                    <option v-for="category in props.categories" :key="category.id" :value="category.id">
-                    {{ category.name }}
-                    </option>
-                </select>
-            </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Category</label>
+            <select v-model="localForm.categoryId" class="w-full border rounded px-3 py-2" required>
+              <option v-for="category in props.categories" :key="category.id" :value="category.id">
+                {{ category.name }}
+              </option>
+            </select>
+          </div>
 
           <div class="flex justify-end gap-2">
             <button

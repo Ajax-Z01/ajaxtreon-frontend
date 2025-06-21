@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
 import { validateUserInput } from '~/composables/useUserValidation'
+import { UserPlus, X } from 'lucide-vue-next'
 
 const errors = ref<Record<string, string>>({})
 
@@ -70,57 +71,64 @@ const closeModal = () => {
 <template>
   <div
     v-if="props.showModal"
-    class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4"
   >
-    <div class="bg-white p-6 rounded-lg shadow-md max-w-xl mx-auto relative">
+    <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-xl relative border border-gray-200">
+      <!-- Close Button -->
       <button
         @click="closeModal"
-        class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        class="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        aria-label="Close"
       >
-        &times;
+        <X class="w-5 h-5" />
       </button>
 
-      <h1 class="text-3xl font-bold mb-6">Create New User</h1>
+      <!-- Title -->
+      <div class="flex items-center gap-2 mb-6">
+        <UserPlus class="w-6 h-6 text-blue-600" />
+        <h1 class="text-2xl font-bold text-gray-800">Create New User</h1>
+      </div>
 
-      <form @submit.prevent="createNewUser">
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Name</label>
+      <!-- Form -->
+      <form @submit.prevent="createNewUser" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
           <input
             v-model="form.name"
             type="text"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             required
           />
           <p v-if="errors.name" class="text-sm text-red-600 mt-1">{{ errors.name }}</p>
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Email</label>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <input
             v-model="form.email"
             type="email"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             required
           />
           <p v-if="errors.email" class="text-sm text-red-600 mt-1">{{ errors.email }}</p>
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Password</label>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
           <input
             v-model="form.password"
             type="password"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             required
           />
           <p v-if="errors.password" class="text-sm text-red-600 mt-1">{{ errors.password }}</p>
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Role</label>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
           <select
             v-model="form.role"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
           >
             <option value="user">User</option>
             <option value="admin">Admin</option>
@@ -130,28 +138,28 @@ const closeModal = () => {
           <p v-if="errors.role" class="text-sm text-red-600 mt-1">{{ errors.role }}</p>
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Phone (optional)</label>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
           <input
             v-model="form.phone"
             type="tel"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Address (optional)</label>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Address (optional)</label>
           <textarea
             v-model="form.address"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows="2"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
           ></textarea>
         </div>
 
-        <div class="text-right">
+        <div class="text-right pt-4">
           <button
             type="submit"
-            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
           >
             Create User
           </button>

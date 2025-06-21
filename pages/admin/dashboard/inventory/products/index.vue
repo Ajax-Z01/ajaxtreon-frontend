@@ -9,6 +9,7 @@ import EditProductModal from '~/components/modal/EditProduct.vue'
 import type { Product, CreateProductPayload, UpdateProductPayload } from '~/types/Product'
 import AppProductCard from '~/components/card/AppProductCard.vue'
 import { useToast } from '~/composables/useToast'
+import { ArrowLeft, PlusCircle } from 'lucide-vue-next'
 
 const { getProducts, addProduct, updateProduct, deleteProduct } = useProducts()
 const { getCategories } = useCategories()
@@ -161,25 +162,27 @@ const confirmDelete = async (id: string) => {
 
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
+    <!-- Back to Dashboard Button -->
     <NuxtLink
       to="/admin/dashboard/inventory"
-      class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+      class="inline-flex items-center gap-2 px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
     >
-      ← Back to Dashboard
+      <ArrowLeft class="w-4 h-4" /> Back to Inventory
     </NuxtLink>
 
-    <h1 class="text-3xl font-bold mb-6">Product Management</h1>
+    <!-- Title -->
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Product Management</h1>
 
     <!-- Add Product Button -->
     <button
       @click="openAddForm"
       :disabled="loadingAll"
-      class="p-3 mb-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+      class="inline-flex items-center gap-2 p-3 mb-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
     >
-      Add New Product
+      <PlusCircle class="w-5 h-5" /> Add New Product
     </button>
 
-    <!-- Loading State -->
+    <!-- Loading Skeleton -->
     <div v-if="loading">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div v-for="n in 3" :key="n" class="animate-pulse p-4 bg-white rounded-xl shadow">
@@ -195,10 +198,12 @@ const confirmDelete = async (id: string) => {
 
     <!-- No Products or Categories State -->
     <div v-else-if="!products?.length || !categories?.length">
-      <div class="text-gray-500">No products available or categories not loaded.</div>
+      <div class="text-gray-500 flex items-center gap-2">
+        <span class="text-xl">⚠️</span> No products available or categories not loaded.
+      </div>
     </div>
 
-    <!-- Product List -->
+    <!-- Product Grid -->
     <div v-else>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <AppProductCard

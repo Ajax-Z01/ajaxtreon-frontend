@@ -1,29 +1,28 @@
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
-import { validateSupplierInput } from '~/composables/useSupplierValidation'
+import { X, User, Mail, Phone, MapPin, UserCheck } from 'lucide-vue-next'
+import { validateSellerInput } from '~/composables/useSellerValidation'
 
 const errors = ref<Record<string, string>>({})
 
 const props = defineProps<{
   showModal: boolean
-  selectedSupplier: {
+  selectedSeller: {
     id: string
     name: string
     email?: string
     phone?: string
     address?: string
-    contactPerson?: string
   } | null
 }>()
 
 const emit = defineEmits<{
-  (e: 'updateSupplier', payload: {
+  (e: 'updateSeller', payload: {
     id: string
     name: string
     email?: string
     phone?: string
     address?: string
-    contactPerson?: string
   }): void
   (e: 'closeModal'): void
 }>()
@@ -33,34 +32,31 @@ const form = ref({
   email: '',
   phone: '',
   address: '',
-  contactPerson: '',
 })
 
 watchEffect(() => {
-  if (props.selectedSupplier) {
-    form.value.name = props.selectedSupplier.name
-    form.value.email = props.selectedSupplier.email ?? ''
-    form.value.phone = props.selectedSupplier.phone ?? ''
-    form.value.address = props.selectedSupplier.address ?? ''
-    form.value.contactPerson = props.selectedSupplier.contactPerson ?? ''
+  if (props.selectedSeller) {
+    form.value.name = props.selectedSeller.name
+    form.value.email = props.selectedSeller.email ?? ''
+    form.value.phone = props.selectedSeller.phone ?? ''
+    form.value.address = props.selectedSeller.address ?? ''
     errors.value = {}
   }
 })
 
-const updateSupplier = () => {
-  if (!props.selectedSupplier) return
+const updateSeller = () => {
+  if (!props.selectedSeller) return
 
-  const validation = validateSupplierInput(form.value)
+  const validation = validateSellerInput(form.value)
   errors.value = validation.errors
   if (!validation.valid) return
 
-  emit('updateSupplier', {
-    id: props.selectedSupplier.id,
+  emit('updateSeller', {
+    id: props.selectedSeller.id,
     name: form.value.name,
     email: form.value.email || undefined,
     phone: form.value.phone || undefined,
     address: form.value.address || undefined,
-    contactPerson: form.value.contactPerson || undefined,
   })
 }
 
@@ -72,76 +68,78 @@ const closeModal = () => {
 <template>
   <div
     v-if="showModal"
-    class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50"
+    class="fixed inset-0 bg-gray-700 bg-opacity-80 flex items-center justify-center z-50 px-4"
   >
-    <div class="bg-white p-6 rounded-lg shadow-md max-w-xl mx-auto relative">
+    <div class="bg-white rounded-lg shadow-lg max-w-xl w-full p-6 relative">
       <button
         @click="closeModal"
-        class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        aria-label="Close modal"
+        class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition"
       >
-        &times;
+        <X class="w-6 h-6" />
       </button>
 
-      <h1 class="text-3xl font-bold mb-6">Edit Supplier</h1>
+      <h1 class="text-3xl font-bold mb-6 text-gray-900 flex items-center gap-2">
+        <User class="w-7 h-7 text-green-600" />
+        Edit Seller
+      </h1>
 
-      <form @submit.prevent="updateSupplier">
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Name</label>
+      <form @submit.prevent="updateSeller" class="space-y-5">
+        <label class="text-sm font-medium text-gray-700" for="name">Name</label>
+        <div class="relative">
+          <User class="absolute left-3 top-1/2 -translate-y-1/2 text-green-600 w-4 h-4 pointer-events-none" />
           <input
+            id="name"
             v-model="form.name"
             type="text"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="pl-9 w-full py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             required
           />
-          <p v-if="errors.name" class="text-sm text-red-600 mt-1">{{ errors.name }}</p>
+          <p v-if="errors.name" class="text-xs text-red-600 mt-1">{{ errors.name }}</p>
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Email (optional)</label>
+        <label class="text-sm font-medium text-gray-700" for="email">Email (optional)</label>
+        <div class="relative">
+          <Mail class="absolute left-3 top-1/2 -translate-y-1/2 text-green-600 w-4 h-4 pointer-events-none" />
           <input
+            id="email"
             v-model="form.email"
             type="email"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="pl-9 w-full py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
-          <p v-if="errors.email" class="text-sm text-red-600 mt-1">{{ errors.email }}</p>
+          <p v-if="errors.email" class="text-xs text-red-600 mt-1">{{ errors.email }}</p>
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Phone (optional)</label>
+        <label class="text-sm font-medium text-gray-700" for="phone">Phone (optional)</label>
+        <div class="relative">
+          <Phone class="absolute left-3 top-1/2 -translate-y-1/2 text-green-600 w-4 h-4 pointer-events-none" />
           <input
+            id="phone"
             v-model="form.phone"
             type="tel"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="pl-9 w-full py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
-          <p v-if="errors.phone" class="text-sm text-red-600 mt-1">{{ errors.phone }}</p>
+          <p v-if="errors.phone" class="text-xs text-red-600 mt-1">{{ errors.phone }}</p>
         </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Address (optional)</label>
+        <label class="text-sm font-medium text-gray-700" for="address">Address (optional)</label>
+        <div class="relative">
+          <MapPin class="absolute left-3 top-3 text-green-600 w-4 h-4 pointer-events-none" />
           <textarea
+            id="address"
             v-model="form.address"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows="2"
+            rows="3"
+            class="pl-9 w-full py-2 border rounded shadow-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
           ></textarea>
-          <p v-if="errors.address" class="text-sm text-red-600 mt-1">{{ errors.address }}</p>
-        </div>
-
-        <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Contact Person (optional)</label>
-          <input
-            v-model="form.contactPerson"
-            type="text"
-            class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <p v-if="errors.contactPerson" class="text-sm text-red-600 mt-1">{{ errors.contactPerson }}</p>
+          <p v-if="errors.address" class="text-xs text-red-600 mt-1">{{ errors.address }}</p>
         </div>
 
         <div class="text-right">
           <button
             type="submit"
-            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition"
           >
-            Update Supplier
+            Update Seller
           </button>
         </div>
       </form>
