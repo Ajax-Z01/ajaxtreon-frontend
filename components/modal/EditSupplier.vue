@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
 import { X, User, Mail, Phone, MapPin, UserCheck } from 'lucide-vue-next'
-import { validateSellerInput } from '~/composables/useSellerValidation'
+import { validateSupplierInput } from '~/composables/useSupplierValidation'
 
 const errors = ref<Record<string, string>>({})
 
 const props = defineProps<{
   showModal: boolean
-  selectedSeller: {
+  selectedSupplier: {
     id: string
     name: string
     email?: string
@@ -17,7 +17,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'updateSeller', payload: {
+  (e: 'updateSupplier', payload: {
     id: string
     name: string
     email?: string
@@ -35,24 +35,24 @@ const form = ref({
 })
 
 watchEffect(() => {
-  if (props.selectedSeller) {
-    form.value.name = props.selectedSeller.name
-    form.value.email = props.selectedSeller.email ?? ''
-    form.value.phone = props.selectedSeller.phone ?? ''
-    form.value.address = props.selectedSeller.address ?? ''
+  if (props.selectedSupplier) {
+    form.value.name = props.selectedSupplier.name
+    form.value.email = props.selectedSupplier.email ?? ''
+    form.value.phone = props.selectedSupplier.phone ?? ''
+    form.value.address = props.selectedSupplier.address ?? ''
     errors.value = {}
   }
 })
 
-const updateSeller = () => {
-  if (!props.selectedSeller) return
+const updateSupplier = () => {
+  if (!props.selectedSupplier) return
 
-  const validation = validateSellerInput(form.value)
+  const validation = validateSupplierInput(form.value)
   errors.value = validation.errors
   if (!validation.valid) return
 
-  emit('updateSeller', {
-    id: props.selectedSeller.id,
+  emit('updateSupplier', {
+    id: props.selectedSupplier.id,
     name: form.value.name,
     email: form.value.email || undefined,
     phone: form.value.phone || undefined,
@@ -81,10 +81,10 @@ const closeModal = () => {
 
       <h1 class="text-3xl font-bold mb-6 text-gray-900 flex items-center gap-2">
         <User class="w-7 h-7 text-green-600" />
-        Edit Seller
+        Edit Supplier
       </h1>
 
-      <form @submit.prevent="updateSeller" class="space-y-5">
+      <form @submit.prevent="updateSupplier" class="space-y-5">
         <label class="text-sm font-medium text-gray-700" for="name">Name</label>
         <div class="relative">
           <User class="absolute left-3 top-1/2 -translate-y-1/2 text-green-600 w-4 h-4 pointer-events-none" />
@@ -139,7 +139,7 @@ const closeModal = () => {
             type="submit"
             class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition"
           >
-            Update Seller
+            Update Supplier
           </button>
         </div>
       </form>

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+w<script setup lang="ts">
 import { ref, watchEffect } from 'vue'
 import { validateSupplierInput } from '~/composables/useSupplierValidation'
 import { X, Factory } from 'lucide-vue-next'

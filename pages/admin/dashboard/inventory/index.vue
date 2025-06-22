@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useProducts } from '~/composables/useProducts'
 import { useCategories } from '~/composables/useCategories'
 import { useAuth } from '~/composables/useAuth'
-
 import { Package, FolderKanban, CheckCircle2, XCircle, ArrowLeft, Box, Layers, BarChart } from 'lucide-vue-next'
 
 const router = useRouter()

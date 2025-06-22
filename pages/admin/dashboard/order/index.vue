@@ -4,15 +4,32 @@ import { useOrders } from '~/composables/useOrders'
 import { useProducts } from '~/composables/useProducts'
 import { useUsers } from '~/composables/useUsers'
 import type { Order, OrderItem, OrderStatus, CreateOrderPayload } from '~/types/Order'
-import type { Product } from '~/types/Product'
 import type { User } from '~/types/User'
+import { useToast } from '~/composables/useToast'
 
 const { getOrders, addOrder, updateOrder, deleteOrder } = useOrders()
 const { getProducts } = useProducts()
 const { getUsers } = useUsers()
+const { currentUser } = useAuth()
+const { addToast } = useToast()
 
-const { data: orders = ref([]), pending: loading, refresh } = useAsyncData<Order[]>('orders', getOrders, { default: () => [] })
-const { data: products = ref([]) } = useAsyncData('products', () => getProducts(), { default: () => [] })
+const { data: allData, pending: loadingAll,refresh, execute } = await useLazyAsyncData(
+  'products-orders',
+  async () => {
+    const [productsRes, ordersRes] = await Promise.all([
+      getProducts(),
+      getOrders()
+    ])
+    return { products: productsRes, orders: ordersRes }
+  },
+  {
+    watch: [() => currentUser.value?.id],
+    default: () => ({ products: [], orders: [] })
+  }
+)
+
+const products = computed(() => allData.value?.products ?? [])
+const orders = computed(() => allData.value?.orders ?? [])
 const users = ref<User[]>([])
 
 onMounted(async () => {
@@ -20,6 +37,7 @@ onMounted(async () => {
     users.value = await getUsers()
   } catch (error) {
     console.error('Error fetching users:', error)
+    addToast('Failed to load users.', 'error')
   }
 })
 
@@ -84,7 +102,6 @@ const computedTotalPrice = computed(() => {
 
   return totalPrice > 0 ? totalPrice : 0;
 });
-
 
 // Deep clean object
 function cleanObjectDeep(obj: any): any {
@@ -183,14 +200,17 @@ const handleSubmit = async () => {
 
     if (isEditing.value && selectedOrderId.value) {
       await updateOrder(selectedOrderId.value, payload)
+      addToast('Order successfully updated!', 'success')
     } else {
       await addOrder(payload)
+      addToast('Order successfully created!', 'success')
     }
 
     await refresh()
     isFormOpen.value = false
   } catch (error) {
     console.error('Error submitting order form:', error)
+    addToast('Failed to submit order. Please check the form.', 'error')
   }
 }
 
@@ -199,8 +219,10 @@ const handleDelete = async (id: string) => {
   try {
     await deleteOrder(id)
     await refresh()
+    addToast('Order deleted successfully!', 'success')
   } catch (error) {
     console.error('Error deleting order:', error)
+    addToast('Failed to delete order.', 'error')
   }
 }
 </script>
@@ -225,7 +247,7 @@ const handleDelete = async (id: string) => {
       </button>
     </div>
     <!-- Loading State -->
-    <div v-if="loading" class="text-gray-500">Loading...</div>
+    <div v-if="loadingAll" class="text-gray-500">Loading...</div>
 
     <!-- No Orders State -->
     <div v-else-if="!orders || orders.length === 0" class="text-gray-500">No orders available.</div>
