@@ -4,20 +4,21 @@ import { getFirestore, doc, getDoc } from 'firebase/firestore'
 
 import type { User } from '~/types/User'
 
-export const getCurrentUserWithToken = (): Promise<{ user: FirebaseUser | null; token: string | null }> => {
+export const getCurrentUserWithToken = async (): Promise<{ user: FirebaseUser | null; token: string | null }> => {
   const auth = getAuth()
+  const user = auth.currentUser
 
-  return new Promise((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      unsubscribe()
-      if (user) {
-        const token = await user.getIdToken(true)
-        resolve({ user, token })
-      } else {
-        resolve({ user: null, token: null })
-      }
-    }, reject)
-  })
+  if (user) {
+    try {
+      const token = await user.getIdToken(true)
+      return { user, token }
+    } catch (err) {
+      console.error('Failed to get token:', err)
+      return { user: null, token: null }
+    }
+  }
+
+  return { user: null, token: null }
 }
 
 export const getCurrentUserWithRole = (): Promise<{ user: User | null; token: string | null }> => {

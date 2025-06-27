@@ -1,8 +1,25 @@
+import { useRuntimeConfig, useFetch, createError, useCookie } from '#app'
+import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
 import type { Order, CreateOrderPayload, UpdateOrderPayload } from '~/types/Order'
 
 export const useOrders = () => {
   const baseUrl = useRuntimeConfig().public.apiBaseUrl
   const authToken = useCookie<string | null>('authToken')
+
+  const setAuthToken = (token: string) => {
+    authToken.value = token
+  }
+
+  const ensureToken = async () => {
+    if (!authToken.value) {
+      const { token } = await getCurrentUserWithToken()
+      if (token) {
+        setAuthToken(token)
+      } else {
+        throw createError({ statusCode: 401, message: 'Unauthorized' })
+      }
+    }
+  }
 
   const getHeaders = () => {
     const headers: HeadersInit = {
@@ -15,6 +32,7 @@ export const useOrders = () => {
   }
 
   const getOrders = async (): Promise<Order[]> => {
+    await ensureToken()
     const { data, error } = await useFetch<Order[]>(`${baseUrl}/order`, {
       method: 'GET',
       headers: getHeaders(),
@@ -27,25 +45,27 @@ export const useOrders = () => {
     return data.value || []
   }
 
-const addOrder = async (order: CreateOrderPayload): Promise<string> => {
-  const { data, error, status } = await useFetch<{ id: string }>(`${baseUrl}/order`, {
-    method: 'POST',
-    body: JSON.stringify(order),
-    headers: getHeaders(),
-  });
+  const addOrder = async (order: CreateOrderPayload): Promise<string> => {
+    await ensureToken()
+    const { data, error, status } = await useFetch<{ id: string }>(`${baseUrl}/order`, {
+      method: 'POST',
+      body: JSON.stringify(order),
+      headers: getHeaders(),
+    })
 
-  if (error.value) {
-    const message = error.value?.data?.message || 'Failed to add order';
-    throw createError({ statusCode: Number(status.value) || 500, message });
+    if (error.value) {
+      const message = error.value?.data?.message || 'Failed to add order'
+      throw createError({ statusCode: Number(status.value) || 500, message })
+    }
+
+    return data.value?.id || ''
   }
 
-  return data.value?.id || '';
-};
-
   const updateOrder = async (id: string, update: UpdateOrderPayload): Promise<void> => {
+    await ensureToken()
     const { error } = await useFetch(`${baseUrl}/order/${id}`, {
       method: 'PUT',
-      body: update,
+      body: JSON.stringify(update),
       headers: getHeaders(),
     })
 
@@ -55,6 +75,7 @@ const addOrder = async (order: CreateOrderPayload): Promise<string> => {
   }
 
   const deleteOrder = async (id: string): Promise<void> => {
+    await ensureToken()
     const { error } = await useFetch(`${baseUrl}/order/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
@@ -66,6 +87,7 @@ const addOrder = async (order: CreateOrderPayload): Promise<string> => {
   }
 
   return {
+    ensureToken,
     getOrders,
     addOrder,
     updateOrder,

@@ -1,4 +1,4 @@
-import { defineNuxtRouteMiddleware, navigateTo } from 'nuxt/app'
+import { defineNuxtRouteMiddleware, navigateTo, useCookie } from 'nuxt/app'
 import { useUserStore } from '~/stores/userStore'
 import type { RouteLocationNormalized } from 'vue-router'
 
@@ -6,8 +6,9 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => 
   if (import.meta.server) return
 
   const userStore = useUserStore()
+  const token = useCookie('auth_token')?.value
 
-  if (!userStore.isReady && !userStore.isFetching) {
+  if (!userStore.isReady && !userStore.isFetching && token) {
     try {
       await userStore.fetchUser()
     } catch {
@@ -15,8 +16,9 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => 
     }
   }
 
-  const publicPages = ['/', '/auth/login', '/auth/register', '/auth/register-seller']
-  if (publicPages.includes(to.path)) return
+  const publicPaths = ['/', '/auth']
+  const isPublic = publicPaths.some(p => to.path.startsWith(p))
+  if (isPublic) return
 
   if (!userStore.user) {
     return navigateTo('/auth/login')

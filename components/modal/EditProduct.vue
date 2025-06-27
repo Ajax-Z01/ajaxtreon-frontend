@@ -79,6 +79,20 @@ const submit = () => {
             <label class="block text-sm font-medium mb-1">Price</label>
             <input v-model.number="localForm.price" type="number" class="w-full border rounded px-3 py-2" required />
           </div>
+          
+          <div>
+            <label class="block text-sm font-medium mb-1">
+              Cost Price
+              <span class="text-gray-400 text-xs">(optional)</span>
+            </label>
+            <input
+              v-model.number="localForm.costPrice"
+              type="number"
+              class="w-full border rounded px-3 py-2"
+              placeholder="e.g. 5000"
+              min="0"
+            />
+          </div>
 
           <div>
             <label class="block text-sm font-medium mb-1">Stock</label>

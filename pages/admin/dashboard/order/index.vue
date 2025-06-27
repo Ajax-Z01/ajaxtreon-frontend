@@ -4,12 +4,13 @@ import { useOrders } from '~/composables/useOrders'
 import { useProducts } from '~/composables/useProducts'
 import { useUsers } from '~/composables/useUsers'
 import type { Order, OrderItem, OrderStatus, CreateOrderPayload } from '~/types/Order'
-import type { User } from '~/types/User'
+import { useCustomers } from '~/composables/useCustomers'
 import { useToast } from '~/composables/useToast'
+import type { Customer } from '~/types/Customer'
 
 const { getOrders, addOrder, updateOrder, deleteOrder } = useOrders()
 const { getProducts } = useProducts()
-const { getUsers } = useUsers()
+const { getCustomers } = useCustomers()
 const { currentUser } = useAuth()
 const { addToast } = useToast()
 
@@ -30,11 +31,11 @@ const { data: allData, pending: loadingAll,refresh, execute } = await useLazyAsy
 
 const products = computed(() => allData.value?.products ?? [])
 const orders = computed(() => allData.value?.orders ?? [])
-const users = ref<User[]>([])
+const customers = ref<Customer[]>([])
 
 onMounted(async () => {
   try {
-    users.value = await getUsers()
+    customers.value = await getCustomers()
   } catch (error) {
     console.error('Error fetching users:', error)
     addToast('Failed to load users.', 'error')
@@ -77,8 +78,8 @@ const getOrderTotal = (order: Order) => {
 }
 
 const getCustomerNameById = (id: string) => {
-  const user = users.value.find(u => u.id === id)
-  return user ? user.name || user.email : 'Unknown Customer'
+  const customer = customers.value.find(c => c.id === id)
+  return customer ? customer.name || customer.email : 'Unknown Customer'
 }
 
 // Computed to find selected product data
@@ -307,8 +308,8 @@ const handleDelete = async (id: string) => {
             <label class="block text-sm font-medium mb-1">Customer</label>
             <select v-model="form.customerId" class="w-full border rounded px-3 py-2" required>
               <option disabled value="">-- Select Customer --</option>
-              <option v-for="user in users" :key="user.id" :value="user.id">
-                {{ user.name || user.email || user.id }}
+              <option v-for="customer in customers" :key="customer.id" :value="customer.id">
+                {{ customer.name || customer.email || customer.id }}
               </option>
             </select>
           </div>

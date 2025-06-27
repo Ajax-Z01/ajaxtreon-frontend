@@ -156,6 +156,7 @@ export const useAuth = () => {
       currentUser.value = null
       loading.value = false
       if (process.client) {
+        document.cookie = 'auth_token=; Max-Age=0; path=/;'
         window.location.href = '/auth/login'
       }
     }
