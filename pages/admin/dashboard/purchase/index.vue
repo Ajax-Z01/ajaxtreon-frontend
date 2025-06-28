@@ -1,34 +1,52 @@
 <script setup lang="ts">
-import { ref, toRaw, onMounted, watch  } from 'vue'
+import { ref, computed, watch, toRaw } from 'vue'
 import { usePurchases } from '~/composables/usePurchases'
 import { useProducts } from '~/composables/useProducts'
-import { useUsers } from '~/composables/useUsers'
+import { useSuppliers } from '~/composables/useSuppliers'
+import { useAuth } from '~/composables/useAuth'
 import type { Purchase, PurchaseStatus } from '~/types/Purchase'
-import type { Product } from '~/types/Product'
-import type { User } from '~/types/User'
+import { useToast } from '~/composables/useToast'
 
 const { getPurchases, addPurchase, updatePurchaseStatus, deletePurchase } = usePurchases()
 const { getProducts } = useProducts()
-const { getUsers } = useUsers()
+const { getSuppliers } = useSuppliers()
+const { currentUser } = useAuth()
+const { addToast } = useToast()
 
-const { data: purchases = ref([]), pending: loading, refresh } = useAsyncData<Purchase[]>('purchases', getPurchases, { default: () => [] })
-const { data: products = ref([]) } = useAsyncData('products', () => getProducts(), { default: () => [] })
-const users = ref<User[]>([])
-
-onMounted(async () => {
-  try {
-    users.value = await getUsers()
-  } catch (error) {
-    console.error('Error fetching users:', error)
+const { data: allData, refresh, pending: loading } = await useLazyAsyncData(
+  'purchase-management',
+  async () => {
+    const [purchasesRes, productsRes, suppliersRes] = await Promise.all([
+      getPurchases(),
+      getProducts(),
+      getSuppliers()
+    ])
+    return {
+      purchases: purchasesRes,
+      products: productsRes,
+      suppliers: suppliersRes
+    }
+  },
+  {
+    default: () => ({
+      purchases: [],
+      products: [],
+      suppliers: []
+    }),
+    watch: [() => currentUser.value?.id]
   }
-})
+)
+
+const purchases = computed(() => allData.value?.purchases || [])
+const products = computed(() => allData.value?.products || [])
+const suppliers = computed(() => allData.value?.suppliers || [])
 
 const isFormOpen = ref(false)
 const isEditing = ref(false)
+const isSubmitting = ref(false)
 const formTitle = ref('Add New Purchase')
 const selectedPurchaseId = ref<string | null>(null)
 
-// Form state: sesuai dengan backend's CreatePurchasePayload
 const form = ref<{
   supplierId: string
   productId: string
@@ -44,7 +62,7 @@ const form = ref<{
   unitPrice: 0,
   status: 'pending',
   invoiceNo: '',
-  notes: '',
+  notes: ''
 })
 
 const openAddForm = () => {
@@ -56,7 +74,7 @@ const openAddForm = () => {
     unitPrice: 0,
     status: 'pending',
     invoiceNo: '',
-    notes: '',
+    notes: ''
   }
   isEditing.value = false
   isFormOpen.value = true
@@ -71,7 +89,7 @@ const openEditForm = (purchase: Purchase) => {
     unitPrice: purchase.unitPrice,
     status: purchase.status || 'pending',
     invoiceNo: purchase.invoiceNo || '',
-    notes: purchase.notes || '',
+    notes: purchase.notes || ''
   }
   selectedPurchaseId.value = purchase.id
   isEditing.value = true
@@ -79,51 +97,60 @@ const openEditForm = (purchase: Purchase) => {
 }
 
 const handleSubmit = async () => {
+  if (isSubmitting.value) return
+  isSubmitting.value = true
   try {
-    const rawForm = toRaw(form.value);
+    const rawForm = toRaw(form.value)
 
     if (!isEditing.value) {
-      delete rawForm.invoiceNo;
-      await addPurchase(rawForm);
+      delete rawForm.invoiceNo
+      await addPurchase(rawForm)
+      addToast('Purchase added successfully', 'success')
     } else if (selectedPurchaseId.value) {
-      await updatePurchaseStatus(selectedPurchaseId.value, { status: rawForm.status! });
+      await updatePurchaseStatus(selectedPurchaseId.value, { status: rawForm.status! })
+      addToast('Purchase status updated', 'success')
     }
 
-    await refresh();
-    isFormOpen.value = false;
+    await refresh()
+    isFormOpen.value = false
   } catch (error) {
-    console.error('Error submitting purchase form', error);
+    console.error('Error submitting form:', error)
+    addToast('Failed to submit purchase', 'error')
+  } finally {
+    isSubmitting.value = false
   }
-};
+}
 
 const handleDelete = async (id: string) => {
   try {
     await deletePurchase(id)
     await refresh()
+    addToast('Purchase deleted', 'success')
   } catch (error) {
-    console.error('Error deleting purchase', error)
+    console.error('Error deleting purchase:', error)
+    addToast('Failed to delete purchase', 'error')
   }
 }
 
-const getProductNameById = (productId: string) => {
-  const product = products.value.find(p => p.id === productId)
-  return product?.name || 'Unknown Product'
-}
+const getProductNameById = (productId: string) =>
+  products.value.find(p => p.id === productId)?.name || 'Unknown Product'
 
 const getSupplierNameById = (id: string) => {
-  const user = users.value.find(u => u.id === id)
-  return user?.name || user?.email || 'Unknown Supplier'
+  const supplier = suppliers.value.find(s => s.id === id)
+  return supplier?.name || supplier?.email || 'Unknown Supplier'
 }
+
+const formatRupiah = (amount: number) =>
+  `Rp ${amount.toLocaleString('id-ID')}`
+
+const formatDate = (value: string | Date) =>
+  (typeof value === 'string' ? new Date(value) : value).toLocaleString('id-ID')
 
 watch(
   () => form.value.productId,
-  (newProductId) => {
-    const product = products.value.find(p => p.id === newProductId)
-    if (product) {
-      form.value.unitPrice = product.price
-    } else {
-      form.value.unitPrice = 0
-    }
+  (newId) => {
+    const product = products.value.find(p => p.id === newId)
+    form.value.unitPrice = product?.price || 0
   }
 )
 </script>
@@ -152,31 +179,60 @@ watch(
     <div v-else-if="!purchases || purchases.length === 0" class="text-gray-500">No purchases available.</div>
 
     <div v-else>
-      <ul class="space-y-4">
-        <li v-for="purchase in purchases" :key="purchase.id" class="p-6 bg-white shadow rounded-lg flex justify-between items-center">
-          <div class="text-lg font-semibold">
-            Invoice No: {{ purchase.invoiceNo }}
+      <ul class="grid gap-4 md:grid-cols-2">
+        <li
+          v-for="purchase in purchases"
+          :key="purchase.id"
+          class="p-6 bg-white rounded-lg shadow flex flex-col justify-between"
+        >
+          <div class="flex justify-between items-start mb-2">
+            <div class="text-blue-600 font-semibold">#{{ purchase.invoiceNo }}</div>
+            <span
+              class="text-sm px-2 py-1 rounded font-medium"
+              :class="{
+                'bg-yellow-100 text-yellow-800': purchase.status === 'pending',
+                'bg-green-100 text-green-800': purchase.status === 'completed',
+                'bg-red-100 text-red-800': purchase.status === 'cancelled'
+              }"
+            >
+              {{ purchase.status }}
+            </span>
           </div>
-          <div class="text-lg font-semibold">
-            Product: {{ getProductNameById(purchase.productId) }}
+
+          <div class="text-sm text-gray-500 mb-1">Product:</div>
+          <div class="text-lg font-semibold text-gray-800">
+            {{ getProductNameById(purchase.productId) }}
           </div>
-          <div class="text-lg font-semibold">
-            Supplier: {{ getSupplierNameById(purchase.supplierId) }}
+
+          <div class="text-sm text-gray-500 mt-2 mb-1">Supplier:</div>
+          <div class="text-base text-gray-700">
+            {{ getSupplierNameById(purchase.supplierId) }}
           </div>
-          <div class="flex gap-4">
-            <div><strong>Qty:</strong> {{ purchase.quantity }}</div>
-            <div><strong>Status:</strong> {{ purchase.status }}</div>
+
+          <div class="flex justify-between items-center mt-4 text-sm text-gray-600">
+            <div>
+              <span>Qty: </span><strong>{{ purchase.quantity }}</strong>
+            </div>
+            <div>
+              <span>Price: </span>
+              <strong>{{ formatRupiah(purchase.unitPrice) }}</strong>
+            </div>
           </div>
-          <div class="flex gap-2">
+
+          <div class="text-xs text-gray-400 mt-2">
+            Created: {{ formatDate(purchase.createdAt) }}
+          </div>
+
+          <div class="flex gap-2 mt-4 justify-end">
             <button
               @click="openEditForm(purchase)"
-              class="p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+              class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
             >
               Edit
             </button>
             <button
               @click="handleDelete(purchase.id)"
-              class="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
             >
               Delete
             </button>
@@ -196,8 +252,8 @@ watch(
             <label class="block text-sm font-medium mb-1">Supplier</label>
             <select v-model="form.supplierId" class="w-full border rounded px-3 py-2" required :disabled="isEditing">
               <option disabled value="">-- Select Supplier --</option>
-              <option v-for="user in users" :key="user.id" :value="user.id">
-                {{ user.name || user.email }}
+              <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
+                {{ supplier.name || supplier.email }}
               </option>
             </select>
           </div>

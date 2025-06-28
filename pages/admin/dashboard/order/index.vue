@@ -2,10 +2,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useOrders } from '~/composables/useOrders'
 import { useProducts } from '~/composables/useProducts'
-import { useUsers } from '~/composables/useUsers'
 import type { Order, OrderItem, OrderStatus, CreateOrderPayload } from '~/types/Order'
 import { useCustomers } from '~/composables/useCustomers'
 import { useToast } from '~/composables/useToast'
+import { useAuth } from '~/composables/useAuth'
 import type { Customer } from '~/types/Customer'
 
 const { getOrders, addOrder, updateOrder, deleteOrder } = useOrders()
@@ -66,11 +66,6 @@ const getFirstOrderItem = (order: Order): OrderItem | null => {
 const getProductById = (productId?: string) => {
   if (!productId) return null
   return products.value.find(p => p.id === productId) ?? null
-}
-
-const getProductNameById = (productId?: string) => {
-  const product = getProductById(productId)
-  return product ? product.name : 'Unknown Product'
 }
 
 const getOrderTotal = (order: Order) => {
@@ -176,23 +171,6 @@ const openAddForm = () => {
   isFormOpen.value = true
 }
 
-// Open form for editing existing order
-const openEditForm = (order: Order) => {
-  formTitle.value = 'Update Order'
-  const firstItem = getFirstOrderItem(order)
-  form.value = {
-    customerId: order.customerId,
-    productId: firstItem?.productId || '',
-    quantity: firstItem?.quantity || 1,
-    status: order.status || 'pending',
-    discount: firstItem?.discount ?? 0,
-    tax: firstItem?.tax ?? 0
-  }
-  selectedOrderId.value = order.id
-  isEditing.value = true
-  isFormOpen.value = true
-}
-
 // Submit handler to send payload to backend
 const handleSubmit = async () => {
   try {
@@ -259,33 +237,62 @@ const handleDelete = async (id: string) => {
         <li
           v-for="order in orders"
           :key="order.id"
-          class="p-6 bg-white shadow-lg rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+          class="p-6 bg-white shadow-md rounded-lg border border-gray-200"
         >
-          <div class="flex flex-col gap-1">
-            <div class="text-lg font-semibold">
-              Order for: {{ getProductNameById(getFirstOrderItem(order)?.productId) }}
+          <!-- Header -->
+          <div class="flex justify-between items-start mb-2 flex-col md:flex-row md:items-center">
+            <div>
+              <p class="text-lg font-semibold text-gray-900">
+                {{ getCustomerNameById(order.customerId) }}
+              </p>
+              <p class="text-sm text-gray-600">
+                Order ID: {{ order.id }}
+              </p>
+              <p class="text-sm text-gray-500">
+                Ordered At: {{ new Date(order.createdAt).toLocaleString() }}
+              </p>
             </div>
-            <div class="text-lg font-semibold">
-              Order by: {{ getCustomerNameById(order.customerId) }}
-            </div>
-          </div>
-
-          <div class="flex items-center gap-6">
-            <div><strong>Qty:</strong> {{ getFirstOrderItem(order)?.quantity ?? '-' }}</div>
-            <div><strong>Total:</strong> ${{ getOrderTotal(order) }}</div>
-            <div><strong>Status:</strong> {{ order.status }}</div>
-          </div>
-
-          <div class="flex gap-2">
-            <button
-              @click="openEditForm(order)"
-              class="p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+            <span
+              class="mt-2 md:mt-0 text-sm px-2 py-1 rounded font-medium"
+              :class="{
+                'bg-yellow-100 text-yellow-800': order.status === 'pending',
+                'bg-green-100 text-green-800': order.status === 'completed',
+                'bg-red-100 text-red-800': order.status === 'cancelled'
+              }"
             >
-              Edit
-            </button>
+              {{ order.status.toUpperCase() }}
+            </span>
+          </div>
+
+          <!-- Items List -->
+          <div class="mb-4">
+            <p class="text-sm text-gray-600 mb-1 font-medium">Items:</p>
+            <ul class="space-y-1">
+              <li
+                v-for="item in order.items"
+                :key="item.productId"
+                class="text-sm text-gray-800 flex justify-between"
+              >
+                <span>{{ item.productName }}</span>
+                <span>{{ item.quantity }} × ${{ item.unitPrice }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Total & Delete -->
+          <div class="flex justify-between items-center mt-2">
+            <div>
+              <p class="text-base font-semibold text-gray-900">
+                Total: ${{ getOrderTotal(order) }}
+              </p>
+              <p v-if="order.discount || order.tax" class="text-xs text-gray-500">
+                <span v-if="order.discount">Disc: {{ order.discount }}% </span>
+                <span v-if="order.tax">Tax: {{ order.tax }}%</span>
+              </p>
+            </div>
             <button
               @click="handleDelete(order.id)"
-              class="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded"
             >
               Delete
             </button>
