@@ -3,59 +3,60 @@ import { ref, onMounted } from 'vue'
 import ModalCreateSupplier from '~/components/modal/CreateSupplier.vue'
 import ModalEditSupplier from '~/components/modal/EditSupplier.vue'
 import { useSuppliers } from '~/composables/useSuppliers'
+import { useToast } from '~/composables/useToast'
 import type { Supplier, SupplierCreateInput, SupplierUpdateInput } from '~/types/Supplier'
 
 const suppliers = ref<Supplier[]>([])
 const selectedSupplier = ref<Supplier | null>(null)
-const { getSuppliers, getSupplierById, createSupplier, updateSupplier, deleteSupplier } = useSuppliers()
-
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 
-onMounted(async () => {
-  try {
-    suppliers.value = await getSuppliers()
-  } catch (error) {
-    console.error('Error fetching suppliers:', error)
-  }
-})
+const { getSuppliers, getSupplierById, createSupplier, updateSupplier, deleteSupplier } = useSuppliers()
+const { addToast } = useToast()
 
-const handleCreateSupplier = async (supplierData: SupplierCreateInput) => {
+const loadSuppliers = async () => {
   try {
-    const created = await createSupplier(supplierData)
-    suppliers.value.push(created)
     suppliers.value = await getSuppliers()
-    showCreateModal.value = false
   } catch (error) {
-    console.error('Error creating supplier:', error)
+    console.error(error)
+    addToast('Failed to fetch suppliers', 'error')
   }
 }
 
-const handleUpdateSupplier = async (payload: {
-  id: string
-  name: string
-  email?: string
-  phone?: string
-  address?: string
-}) => {
+onMounted(loadSuppliers)
+
+const handleCreateSupplier = async (supplierData: SupplierCreateInput) => {
+  try {
+    await createSupplier(supplierData)
+    await loadSuppliers()
+    addToast('Supplier created successfully', 'success')
+    showCreateModal.value = false
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to create supplier', 'error')
+  }
+}
+
+const handleUpdateSupplier = async (payload: SupplierUpdateInput & { id: string }) => {
   try {
     const { id, ...updatedData } = payload
-    const updated = await updateSupplier(id, updatedData)
-    suppliers.value = suppliers.value.map(s => (s.id === id ? updated : s))
+    await updateSupplier(id, updatedData)
+    await loadSuppliers()
+    addToast('Supplier updated successfully', 'success')
     showEditModal.value = false
   } catch (error) {
-    console.error('Error updating supplier:', error)
+    console.error(error)
+    addToast('Failed to update supplier', 'error')
   }
 }
 
 const fetchSupplierById = async (id: string) => {
   try {
     selectedSupplier.value = await getSupplierById(id)
-    if (selectedSupplier.value) {
-      showEditModal.value = true
-    }
+    showEditModal.value = true
   } catch (error) {
-    console.error('Error fetching supplier by ID:', error)
+    console.error(error)
+    addToast('Failed to load supplier', 'error')
   }
 }
 
@@ -63,65 +64,73 @@ const removeSupplier = async (id: string) => {
   try {
     await deleteSupplier(id)
     suppliers.value = suppliers.value.filter(s => s.id !== id)
+    addToast('Supplier deleted successfully', 'success')
   } catch (error) {
-    console.error('Error deleting supplier:', error)
+    console.error(error)
+    addToast('Failed to delete supplier', 'error')
   }
 }
 </script>
 
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
-    <NuxtLink
-      to="/admin/dashboard"
-      class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-    >
-      ← Back to Dashboard
-    </NuxtLink>
+    <!-- Header + Navigation -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <NuxtLink
+        to="/admin/dashboard"
+        class="text-sm text-white bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition text-center md:text-left"
+      >
+        ← Back to Dashboard
+      </NuxtLink>
 
-    <h1 class="text-3xl font-bold mb-6">Supplier Management</h1>
+      <h1 class="text-2xl md:text-3xl font-bold text-center md:text-left">
+        Supplier Management
+      </h1>
 
-    <!-- Add Supplier Button -->
-    <div class="mb-4 text-right">
       <button
         @click="showCreateModal = true"
-        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition text-center"
       >
-        Add New Supplier
+        + Add Supplier
       </button>
     </div>
 
-    <!-- Supplier List -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-      <h2 class="text-xl font-semibold mb-4">Suppliers</h2>
-      <table class="min-w-full table-auto">
-        <thead>
+    <div class="overflow-x-auto bg-white rounded-lg shadow-md">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
           <tr>
-            <th class="px-4 py-2 text-left">ID</th>
-            <th class="px-4 py-2 text-left">Name</th>
-            <th class="px-4 py-2 text-left">Email</th>
-            <th class="px-4 py-2 text-left">Phone</th>
-            <th class="px-4 py-2 text-left">Actions</th>
+            <th class="px-4 py-3 text-left">Name</th>
+            <th class="px-4 py-3 text-left">Email</th>
+            <th class="px-4 py-3 text-left">Phone</th>
+            <th class="px-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="supplier in suppliers" :key="supplier.id">
-            <td class="px-4 py-2">{{ supplier.id }}</td>
-            <td class="px-4 py-2">{{ supplier.name }}</td>
-            <td class="px-4 py-2">{{ supplier.email || '-' }}</td>
-            <td class="px-4 py-2">{{ supplier.phone || '-' }}</td>
-            <td class="px-4 py-2">
-              <button
-                @click="fetchSupplierById(supplier.id)"
-                class="text-blue-500 hover:text-blue-700 mr-4"
-              >
-                Edit
-              </button>
-              <button
-                @click="removeSupplier(supplier.id)"
-                class="text-red-500 hover:text-red-700"
-              >
-                Delete
-              </button>
+        <tbody class="divide-y divide-gray-100">
+          <tr
+            v-for="supplier in suppliers"
+            :key="supplier.id"
+            class="hover:bg-gray-50 text-sm"
+          >
+            <td class="px-4 py-3 whitespace-nowrap">
+              <span class="font-medium">{{ supplier.name }}</span>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap">{{ supplier.email || '-' }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">{{ supplier.phone || '-' }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <div class="flex gap-3">
+                <button
+                  @click="fetchSupplierById(supplier.id)"
+                  class="text-blue-600 hover:underline"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="removeSupplier(supplier.id)"
+                  class="text-red-600 hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>

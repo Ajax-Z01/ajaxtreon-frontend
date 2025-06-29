@@ -3,53 +3,60 @@ import { ref, onMounted } from 'vue'
 import ModalCreateSeller from '~/components/modal/CreateSeller.vue'
 import ModalEditSeller from '~/components/modal/EditSeller.vue'
 import { useSellers } from '~/composables/useSellers'
+import { useToast } from '~/composables/useToast'
 import type { Seller, SellerCreateInput, SellerUpdatePayload } from '~/types/Seller'
 
 const sellers = ref<Seller[]>([])
 const selectedSeller = ref<Seller | null>(null)
-const { getSellers, getSellerById, createSeller, updateSeller, deleteSeller } = useSellers()
-
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 
-onMounted(async () => {
+const { getSellers, getSellerById, createSeller, updateSeller, deleteSeller } = useSellers()
+const { addToast } = useToast()
+
+const loadSellers = async () => {
   try {
     sellers.value = await getSellers()
   } catch (error) {
-    console.error('Error fetching sellers:', error)
+    console.error(error)
+    addToast('Failed to fetch sellers', 'error')
   }
-})
+}
+
+onMounted(loadSellers)
 
 const handleCreateSeller = async (sellerData: SellerCreateInput) => {
   try {
-    const created = await createSeller(sellerData)
-    sellers.value.push(created)
-    sellers.value = await getSellers()
+    await createSeller(sellerData)
+    await loadSellers()
+    addToast('Seller created successfully', 'success')
     showCreateModal.value = false
   } catch (error) {
-    console.error('Error creating seller:', error)
+    console.error(error)
+    addToast('Failed to create seller', 'error')
   }
 }
 
 const handleUpdateSeller = async (payload: SellerUpdatePayload & { id: string }) => {
   try {
-    const { id, ...updatedData } = payload
-    const updated = await updateSeller(id, updatedData)
-    sellers.value = sellers.value.map(s => (s.id === id ? updated : s))
+    const { id, ...data } = payload
+    await updateSeller(id, data)
+    await loadSellers()
+    addToast('Seller updated successfully', 'success')
     showEditModal.value = false
   } catch (error) {
-    console.error('Error updating seller:', error)
+    console.error(error)
+    addToast('Failed to update seller', 'error')
   }
 }
 
 const fetchSellerById = async (id: string) => {
   try {
     selectedSeller.value = await getSellerById(id)
-    if (selectedSeller.value) {
-      showEditModal.value = true
-    }
+    showEditModal.value = true
   } catch (error) {
-    console.error('Error fetching seller by ID:', error)
+    console.error(error)
+    addToast('Failed to load seller', 'error')
   }
 }
 
@@ -57,79 +64,88 @@ const removeSeller = async (id: string) => {
   try {
     await deleteSeller(id)
     sellers.value = sellers.value.filter(s => s.id !== id)
+    addToast('Seller deleted successfully', 'success')
   } catch (error) {
-    console.error('Error deleting seller:', error)
+    console.error(error)
+    addToast('Failed to delete seller', 'error')
   }
 }
 </script>
 
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
-    <NuxtLink
-      to="/admin/dashboard"
-      class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-    >
-      ← Back to Dashboard
-    </NuxtLink>
+    <!-- Header -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <NuxtLink
+        to="/admin/dashboard"
+        class="text-sm text-white bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition text-center md:text-left"
+      >
+        ← Back to Dashboard
+      </NuxtLink>
 
-    <h1 class="text-3xl font-bold mb-6">Seller Management</h1>
+      <h1 class="text-2xl md:text-3xl font-bold text-center md:text-left">
+        Seller Management
+      </h1>
 
-    <!-- Add Seller Button -->
-    <div class="mb-4 text-right">
       <button
         @click="showCreateModal = true"
-        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition text-center"
       >
-        Add New Seller
+        + Add Seller
       </button>
     </div>
 
-    <!-- Seller List -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-      <h2 class="text-xl font-semibold mb-4">Sellers</h2>
-      <table class="min-w-full table-auto">
-        <thead>
+    <!-- Seller Table -->
+    <div class="bg-white shadow rounded-lg overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
           <tr>
-            <th class="px-4 py-2 text-left">ID</th>
-            <th class="px-4 py-2 text-left">Name</th>
-            <th class="px-4 py-2 text-left">Email</th>
-            <th class="px-4 py-2 text-left">Phone</th>
-            <th class="px-4 py-2 text-left">Actions</th>
+            <th class="px-4 py-3 text-left">Name</th>
+            <th class="px-4 py-3 text-left">Email</th>
+            <th class="px-4 py-3 text-left">Phone</th>
+            <th class="px-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="seller in sellers" :key="seller.id">
-            <td class="px-4 py-2">{{ seller.id }}</td>
-            <td class="px-4 py-2">{{ seller.name }}</td>
-            <td class="px-4 py-2">{{ seller.email || '-' }}</td>
-            <td class="px-4 py-2">{{ seller.phone || '-' }}</td>
-            <td class="px-4 py-2">
-              <button
-                @click="fetchSellerById(seller.id)"
-                class="text-blue-500 hover:text-blue-700 mr-4"
-              >
-                Edit
-              </button>
-              <button
-                @click="removeSeller(seller.id)"
-                class="text-red-500 hover:text-red-700"
-              >
-                Delete
-              </button>
+        <tbody class="divide-y divide-gray-100">
+          <tr
+            v-for="seller in sellers"
+            :key="seller.id"
+            class="hover:bg-gray-50 text-sm"
+          >
+            <td class="px-4 py-3 font-medium whitespace-nowrap">
+              {{ seller.name }}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap">{{ seller.email || '-' }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">{{ seller.phone || '-' }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <div class="flex gap-3">
+                <button
+                  @click="fetchSellerById(seller.id)"
+                  class="text-blue-600 hover:underline"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="removeSeller(seller.id)"
+                  class="text-red-600 hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Modal Create Seller -->
+    <!-- Modal: Create -->
     <ModalCreateSeller
       :showModal="showCreateModal"
       @closeModal="showCreateModal = false"
       @createSeller="handleCreateSeller"
     />
 
-    <!-- Modal Edit Seller -->
+    <!-- Modal: Edit -->
     <ModalEditSeller
       :showModal="showEditModal"
       :selectedSeller="selectedSeller"

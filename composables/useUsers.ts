@@ -150,7 +150,7 @@ export const useUsers = () => {
       const { data, error } = await useFetch<User>(`${baseUrl}/user/${id}/role`, {
         method: 'PUT',
         headers: getHeaders(),
-        body: JSON.stringify({ role }),
+        body: { role },
       })
 
       if (error.value) {

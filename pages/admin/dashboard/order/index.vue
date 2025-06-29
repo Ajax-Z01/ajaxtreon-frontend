@@ -207,29 +207,37 @@ const handleDelete = async (id: string) => {
 </script>
 
 <template>
-  <div class="p-8 bg-gray-100 min-h-screen">
-    <NuxtLink
-      to="/admin/dashboard"
-      class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-    >
-      ← Back to Dashboard
-    </NuxtLink>
-
-    <h1 class="text-3xl font-bold mb-6">Order Management</h1>
-
-    <!-- Add Order Button -->
-    <div class="mb-4 text-right">
-      <button
-        @click="openAddForm" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+  <div class="p-4 md:p-8 bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <NuxtLink
+        to="/admin/dashboard"
+        class="text-sm text-white bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition text-center"
       >
-        Add New Order
+        ← Back to Dashboard
+      </NuxtLink>
+
+      <h1 class="text-2xl md:text-3xl font-bold text-center md:text-left">
+        Order Management
+      </h1>
+
+      <button
+        @click="openAddForm"
+        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition text-center"
+      >
+        + Add Order
       </button>
     </div>
-    <!-- Loading State -->
-    <div v-if="loadingAll" class="text-gray-500">Loading...</div>
 
-    <!-- No Orders State -->
-    <div v-else-if="!orders || orders.length === 0" class="text-gray-500">No orders available.</div>
+    <!-- Loading State -->
+    <div v-if="loadingAll" class="text-gray-500 text-center py-8">
+      Loading orders...
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="!orders || orders.length === 0" class="text-gray-500 text-center py-8">
+      No orders available.
+    </div>
 
     <!-- Orders List -->
     <div v-else>
@@ -237,23 +245,21 @@ const handleDelete = async (id: string) => {
         <li
           v-for="order in orders"
           :key="order.id"
-          class="p-6 bg-white shadow-md rounded-lg border border-gray-200"
+          class="p-4 md:p-6 bg-white shadow rounded-lg border border-gray-200"
         >
-          <!-- Header -->
-          <div class="flex justify-between items-start mb-2 flex-col md:flex-row md:items-center">
+          <!-- Order Info -->
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
             <div>
               <p class="text-lg font-semibold text-gray-900">
                 {{ getCustomerNameById(order.customerId) }}
               </p>
-              <p class="text-sm text-gray-600">
-                Order ID: {{ order.id }}
-              </p>
+              <p class="text-sm text-gray-600">Order ID: {{ order.id }}</p>
               <p class="text-sm text-gray-500">
                 Ordered At: {{ new Date(order.createdAt).toLocaleString() }}
               </p>
             </div>
             <span
-              class="mt-2 md:mt-0 text-sm px-2 py-1 rounded font-medium"
+              class="text-sm px-2 py-1 rounded font-medium w-max"
               :class="{
                 'bg-yellow-100 text-yellow-800': order.status === 'pending',
                 'bg-green-100 text-green-800': order.status === 'completed',
@@ -266,12 +272,12 @@ const handleDelete = async (id: string) => {
 
           <!-- Items List -->
           <div class="mb-4">
-            <p class="text-sm text-gray-600 mb-1 font-medium">Items:</p>
-            <ul class="space-y-1">
+            <p class="text-sm font-medium text-gray-600 mb-1">Items:</p>
+            <ul class="text-sm space-y-1">
               <li
                 v-for="item in order.items"
                 :key="item.productId"
-                class="text-sm text-gray-800 flex justify-between"
+                class="flex justify-between"
               >
                 <span>{{ item.productName }}</span>
                 <span>{{ item.quantity }} × ${{ item.unitPrice }}</span>
@@ -280,21 +286,23 @@ const handleDelete = async (id: string) => {
           </div>
 
           <!-- Total & Delete -->
-          <div class="flex justify-between items-center mt-2">
+          <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
             <div>
               <p class="text-base font-semibold text-gray-900">
                 Total: ${{ getOrderTotal(order) }}
               </p>
-              <p v-if="order.discount || order.tax" class="text-xs text-gray-500">
-                <span v-if="order.discount">Disc: {{ order.discount }}% </span>
+              <p v-if="order.discount || order.tax" class="text-xs text-gray-500 mt-1">
+                <span v-if="order.discount">Disc: {{ order.discount }}%</span>
+                <span v-if="order.discount && order.tax"> &middot; </span>
                 <span v-if="order.tax">Tax: {{ order.tax }}%</span>
               </p>
             </div>
+
             <button
               @click="handleDelete(order.id)"
-              class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded"
+              class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded w-full md:w-auto"
             >
-              Delete
+              Delete Order
             </button>
           </div>
         </li>
@@ -306,11 +314,11 @@ const handleDelete = async (id: string) => {
       v-if="isFormOpen"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
     >
-      <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+      <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg max-h-screen overflow-y-auto">
         <h2 class="text-xl font-bold mb-4">{{ formTitle }}</h2>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
-          <!-- Customer ID -->
+          <!-- Customer -->
           <div>
             <label class="block text-sm font-medium mb-1">Customer</label>
             <select v-model="form.customerId" class="w-full border rounded px-3 py-2" required>
@@ -321,6 +329,7 @@ const handleDelete = async (id: string) => {
             </select>
           </div>
 
+          <!-- Product -->
           <div>
             <label class="block text-sm font-medium mb-1">Product</label>
             <select v-model="form.productId" class="w-full border rounded px-3 py-2" required>
@@ -331,6 +340,7 @@ const handleDelete = async (id: string) => {
             </select>
           </div>
 
+          <!-- Quantity -->
           <div>
             <label class="block text-sm font-medium mb-1">Quantity</label>
             <input
@@ -342,6 +352,7 @@ const handleDelete = async (id: string) => {
             />
           </div>
 
+          <!-- Total Price -->
           <div>
             <label class="block text-sm font-medium mb-1">Total Price</label>
             <input
@@ -350,6 +361,8 @@ const handleDelete = async (id: string) => {
               class="w-full border rounded px-3 py-2 bg-gray-100"
             />
           </div>
+
+          <!-- Discount -->
           <div>
             <label class="block text-sm font-medium mb-1">Discount (%)</label>
             <input
@@ -360,6 +373,8 @@ const handleDelete = async (id: string) => {
               class="w-full border rounded px-3 py-2"
             />
           </div>
+
+          <!-- Tax -->
           <div>
             <label class="block text-sm font-medium mb-1">Tax (%)</label>
             <input
@@ -370,6 +385,7 @@ const handleDelete = async (id: string) => {
             />
           </div>
 
+          <!-- Status -->
           <div>
             <label class="block text-sm font-medium mb-1">Status</label>
             <select v-model="form.status" class="w-full border rounded px-3 py-2">
@@ -379,7 +395,8 @@ const handleDelete = async (id: string) => {
             </select>
           </div>
 
-          <div class="flex justify-end gap-2">
+          <!-- Actions -->
+          <div class="flex justify-end gap-2 pt-2">
             <button
               type="button"
               @click="isFormOpen = false"
