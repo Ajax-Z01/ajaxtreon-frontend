@@ -5,23 +5,19 @@ import { usePayment } from '~/composables/usePayments'
 import type { PaymentData } from '~/types/Payment'
 import ModalCreatePayment from '~/components/modal/CreatePayment.vue'
 import { useToast } from '~/composables/useToast'
+import { Plus, Trash2, CheckCircle2, Clock3, LoaderCircle } from 'lucide-vue-next'
 
 const { currentUser } = useAuth()
 const { createPayment, getAllPayments, updatePaymentStatus, deletePayment } = usePayment()
 const { addToast } = useToast()
 
 const processing = ref(false)
-const errorMessage = ref<string | null>(null)
 const showCreateModal = ref(false)
 
 const newPaymentForm = reactive<PaymentData>({
   orderId: '',
   amount: 0,
   method: ''
-})
-
-const isValidPaymentForm = computed(() => {
-  return newPaymentForm.orderId !== '' && newPaymentForm.amount > 0 && newPaymentForm.method !== ''
 })
 
 const resetPaymentForm = () => {
@@ -32,12 +28,7 @@ const resetPaymentForm = () => {
 
 const { data: allData, refresh, execute, pending: loadingAll } = await useLazyAsyncData(
   'payments',
-  async () => {
-    const [paymentsRes] = await Promise.all([
-      getAllPayments()
-    ])
-    return { payments: paymentsRes }
-  },
+  async () => ({ payments: await getAllPayments() }),
   {
     watch: [() => currentUser.value?.id],
     default: () => ({ payments: [] })
@@ -49,16 +40,13 @@ const payments = computed(() => allData.value?.payments ?? [])
 const handleCreatePayment = async (formData: PaymentData) => {
   try {
     processing.value = true
-    const createdPayment = await createPayment(formData)
-    if (createdPayment) {
-      await refresh()
-      resetPaymentForm()
-      showCreateModal.value = false
-      addToast('Payment created successfully', 'success')
-    }
+    await createPayment(formData)
+    await refresh()
+    resetPaymentForm()
+    showCreateModal.value = false
+    addToast('Payment created successfully', 'success')
   } catch (error) {
-    console.error('Error creating payment:', error)
-    errorMessage.value = 'Error creating payment'
+    console.error(error)
     addToast('Failed to create payment', 'error')
   } finally {
     processing.value = false
@@ -71,7 +59,7 @@ const handleDeletePayment = async (id: string) => {
     await refresh()
     addToast('Payment deleted successfully', 'success')
   } catch (error) {
-    console.error('Error deleting payment:', error)
+    console.error(error)
     addToast('Failed to delete payment', 'error')
   }
 }
@@ -88,50 +76,57 @@ const setPaymentStatus = async (id: string, status: string) => {
 </script>
 
 <template>
-  <div class="p-8 bg-gray-100 min-h-screen">
-    <NuxtLink
-      to="/admin/dashboard"
-      class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-    >
-      ← Back to Dashboard
-    </NuxtLink>
-    
-    <h1 class="text-3xl font-bold mb-6">Payment Management</h1>
+  <div class="p-4 md:p-8 bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <NuxtLink
+        to="/admin/dashboard"
+        class="text-sm text-white bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition text-center"
+      >
+        ← Back to Dashboard
+      </NuxtLink>
 
-    <!-- Add Payment Button -->
-    <div class="mb-4 text-right">
+      <h1 class="text-2xl md:text-3xl font-bold text-center md:text-left">
+        Payment Management
+      </h1>
+
       <button
         @click="showCreateModal = true"
-        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition flex items-center justify-center gap-2"
       >
-        Add New Payment
+        <Plus class="w-4 h-4" /> Add Payment
       </button>
     </div>
 
-    <!-- Payment List -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-      <h2 class="text-xl font-semibold mb-4">Payments</h2>
-      <table class="min-w-full table-auto border border-gray-200">
-        <thead class="bg-gray-50">
+    <!-- Loading State -->
+    <div v-if="loadingAll" class="flex justify-center items-center py-10 text-gray-600">
+      <LoaderCircle class="animate-spin w-5 h-5 mr-2" /> Loading payments...
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="payments.length === 0" class="text-center text-gray-500 py-10">
+      No payments found.
+    </div>
+
+    <!-- Payment Table -->
+    <div v-else class="bg-white shadow rounded-lg overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
           <tr>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Order ID</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Amount</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Method</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Created At</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Actions</th>
+            <th class="px-4 py-3 text-left">Order ID</th>
+            <th class="px-4 py-3 text-left">Amount</th>
+            <th class="px-4 py-3 text-left">Method</th>
+            <th class="px-4 py-3 text-left">Status</th>
+            <th class="px-4 py-3 text-left">Created At</th>
+            <th class="px-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
-        <tbody>
-          <tr
-            v-for="payment in payments"
-            :key="payment.id"
-            class="border-t border-gray-200 hover:bg-gray-50"
-          >
-            <td class="px-4 py-2 text-sm text-gray-800">{{ payment.orderId }}</td>
-            <td class="px-4 py-2 text-sm text-gray-800">$ {{ payment.amount.toFixed(2) }}</td>
-            <td class="px-4 py-2 text-sm text-gray-800">{{ payment.method || '-' }}</td>
-            <td class="px-4 py-2">
+        <tbody class="divide-y divide-gray-100 text-sm">
+          <tr v-for="payment in payments" :key="payment.id" class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium whitespace-nowrap">{{ payment.orderId }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">$ {{ payment.amount.toFixed(2) }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">{{ payment.method || '-' }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">
               <span
                 class="text-xs font-medium px-2 py-1 rounded"
                 :class="{
@@ -143,28 +138,28 @@ const setPaymentStatus = async (id: string, status: string) => {
                 {{ payment.status || '-' }}
               </span>
             </td>
-            <td class="px-4 py-2 text-sm text-gray-500">
+            <td class="px-4 py-3 whitespace-nowrap text-gray-500">
               {{ payment.createdAt ? new Date(payment.createdAt).toLocaleString() : '-' }}
             </td>
-            <td class="px-4 py-2 text-sm">
+            <td class="px-4 py-3 whitespace-nowrap">
               <div class="flex flex-wrap gap-2">
                 <button
                   @click="setPaymentStatus(payment.id, 'paid')"
-                  class="text-green-600 hover:underline"
+                  class="flex items-center gap-1 text-green-600 hover:underline"
                 >
-                  Paid
+                  <CheckCircle2 class="w-4 h-4" /> Paid
                 </button>
                 <button
                   @click="setPaymentStatus(payment.id, 'pending')"
-                  class="text-yellow-600 hover:underline"
+                  class="flex items-center gap-1 text-yellow-600 hover:underline"
                 >
-                  Pending
+                  <Clock3 class="w-4 h-4" /> Pending
                 </button>
                 <button
                   @click="handleDeletePayment(payment.id)"
-                  class="text-red-600 hover:underline"
+                  class="flex items-center gap-1 text-red-600 hover:underline"
                 >
-                  Delete
+                  <Trash2 class="w-4 h-4" /> Delete
                 </button>
               </div>
             </td>
@@ -173,8 +168,11 @@ const setPaymentStatus = async (id: string, status: string) => {
       </table>
     </div>
 
-    <!-- Modal Create Payment -->
-    <ModalCreatePayment :showModal="showCreateModal" @closeModal="showCreateModal = false" @createPayment="handleCreatePayment" />
+    <!-- Create Modal -->
+    <ModalCreatePayment
+      :showModal="showCreateModal"
+      @closeModal="showCreateModal = false"
+      @createPayment="handleCreatePayment"
+    />
   </div>
 </template>
-

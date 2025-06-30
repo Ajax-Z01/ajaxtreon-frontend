@@ -19,3 +19,13 @@ export interface AuthUser {
   email: string;
   role: UserRole;
 }
+
+export interface UserUpdateInput {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  phone?: string
+  address?: string
+  password?: string
+}
