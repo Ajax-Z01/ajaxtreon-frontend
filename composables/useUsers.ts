@@ -1,6 +1,6 @@
 import { useRuntimeConfig, useFetch, createError, useState } from '#app'
 import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
-import type { User } from '~/types/User'
+import type { User, UserUpdateInput } from '~/types/User'
 
 export const useUsers = () => {
   const baseUrl = useRuntimeConfig().public.apiBaseUrl
@@ -104,7 +104,7 @@ export const useUsers = () => {
     }
   }
 
-  const updateUserInfo = async (id: string, updatedData: Omit<User, 'id'>): Promise<User> => {
+  const updateUserInfo = async (id: string, updatedData: UserUpdateInput): Promise<User> => {
     try {
       await ensureToken()
 

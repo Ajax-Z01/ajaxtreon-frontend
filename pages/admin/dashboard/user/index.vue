@@ -45,7 +45,7 @@ const handleCreateUser = async (userData: Omit<User, 'id' | 'createdAt' | 'isAct
   }
 }
 
-const handleUpdateUser = async (payload: UserUpdateInput) => {
+const handleUpdateUser = async (payload: UserUpdateInput & { id: string }) => {
   isLoading.value = true
   try {
     const existing = users.value.find(u => u.id === payload.id)
