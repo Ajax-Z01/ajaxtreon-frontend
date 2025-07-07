@@ -21,38 +21,30 @@ export const getCurrentUserWithToken = async (): Promise<{ user: FirebaseUser | 
   return { user: null, token: null }
 }
 
-export const getCurrentUserWithRole = (): Promise<{ user: User | null; token: string | null }> => {
+export const getCurrentUserWithRole = async (): Promise<{ user: User | null; token: string | null }> => {
   const auth = getAuth()
   const firestore = getFirestore()
 
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       unsubscribe()
-      console.log('Firebase User:', firebaseUser)
-      if (firebaseUser) {
-        try {
-          const token = await firebaseUser.getIdToken(true)
-          console.log('Token:', token)
-
-          const userDocRef = doc(firestore, 'users', firebaseUser.uid)
-          console.log('Fetching userDoc:', userDocRef.path)
-          const userDoc = await getDoc(userDocRef)
-
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as User
-            console.log('User doc data:', userData)
-            resolve({ user: userData, token })
-          } else {
-            console.warn('User doc does not exist for UID:', firebaseUser.uid)
-            resolve({ user: null, token })
-          }
-        } catch (error) {
-          console.error('Error fetching user doc:', error)
-          reject(error)
-        }
-      } else {
-        console.log('No firebase user logged in')
+      if (!firebaseUser) {
         resolve({ user: null, token: null })
+        return
+      }
+      try {
+        const token = await firebaseUser.getIdToken(true)
+        const userDocRef = doc(firestore, 'users', firebaseUser.uid)
+        const userDoc = await getDoc(userDocRef)
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data() as User
+          resolve({ user: userData, token })
+        } else {
+          resolve({ user: null, token })
+        }
+      } catch (error) {
+        reject(error)
       }
     }, reject)
   })

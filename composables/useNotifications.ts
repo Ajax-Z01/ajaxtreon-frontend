@@ -32,20 +32,26 @@ export const useNotifications = () => {
   }
 
   const getNotifications = async (): Promise<Notification[]> => {
-    await ensureToken()
-    const { data, error } = await useFetch<Notification[]>(`${baseUrl}/notifications/user/me`, {
+  await ensureToken()
+  const { data, error } = await useFetch<{ success: boolean; data: Notification[] }>(
+    `${baseUrl}/notification/me`,
+    {
       method: 'GET',
       headers: getHeaders(),
-    })
-    if (error.value) {
-      throw createError({ statusCode: 500, message: 'Failed to fetch notifications' })
     }
-    return data.value || []
+  )
+  if (error.value) {
+    console.error('Fetch error:', error.value)
+    throw createError({ statusCode: 500, message: 'Failed to fetch notifications' })
   }
+  console.log('API Response data:', data.value)
+  return data.value?.data || []
+}
+
 
   const markAsRead = async (id: string): Promise<void> => {
     await ensureToken()
-    const { error } = await useFetch(`${baseUrl}/notifications/${id}/read`, {
+    const { error } = await useFetch(`${baseUrl}/notification/${id}/read`, {
       method: 'PATCH',
       headers: getHeaders(),
     })
@@ -54,20 +60,8 @@ export const useNotifications = () => {
     }
   }
 
-  const deleteNotification = async (id: string): Promise<void> => {
-    await ensureToken()
-    const { error } = await useFetch(`${baseUrl}/notifications/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    })
-    if (error.value) {
-      throw createError({ statusCode: 500, message: 'Failed to delete notification' })
-    }
-  }
-
   return {
     getNotifications,
     markAsRead,
-    deleteNotification,
   }
 }

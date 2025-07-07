@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Bell } from 'lucide-vue-next'
+
 defineProps<{
   route: any
   isAuthenticated: boolean
@@ -53,6 +55,11 @@ const mobileMenuOpen = ref(false)
               Dashboard
             </NuxtLink>
 
+            <!-- 🔔 Notification Icon -->
+            <NuxtLink to="/notification" class="relative hover:opacity-90 transition">
+              <Bell class="w-5 h-5" />
+            </NuxtLink>
+
             <NuxtLink
               :to="role === 'admin' ? '/admin/profile' : role === 'seller' ? '/seller/profile' : '/customer/profile'"
               :class="[
@@ -99,6 +106,16 @@ const mobileMenuOpen = ref(false)
           class="block hover:underline"
         >
           Dashboard
+        </NuxtLink>
+
+        <!-- 🔔 Notification Icon -->
+        <NuxtLink
+          to="/notification"
+          @click="mobileMenuOpen = false"
+          class="flex items-center space-x-2 hover:underline"
+        >
+          <Bell class="w-5 h-5" />
+          <span>Notifikasi</span>
         </NuxtLink>
 
         <NuxtLink
