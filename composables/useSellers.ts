@@ -82,6 +82,26 @@ export const useSellers = () => {
     }
   }
 
+  const getMe = async (): Promise<Seller | null> => {
+    try {
+      await ensureToken()
+
+      const { data, error } = await useFetch<Seller>(`${baseUrl}/seller/me`, {
+        method: 'GET',
+        headers: getHeaders(),
+      })
+
+      if (error.value) {
+        throw createError({ statusCode: 500, message: 'Failed to fetch current seller' })
+      }
+
+      return data.value || null
+    } catch (err) {
+      console.error('Error fetching current seller (me):', err)
+      throw createError({ statusCode: 500, message: 'Failed to fetch current seller' })
+    }
+  }
+
   const createSeller = async (sellerData: SellerCreateInput): Promise<Seller> => {
     try {
       await ensureToken()
@@ -146,6 +166,7 @@ export const useSellers = () => {
     ensureToken,
     getSellers,
     getSellerById,
+    getMe,
     createSeller,
     updateSeller,
     deleteSeller,
