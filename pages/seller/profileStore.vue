@@ -6,12 +6,23 @@ import { useSellers } from '~/composables/useSellers'
 import { useToast } from '~/composables/useToast'
 import { useCloudinaryUploader } from '~/composables/useCloudinaryUploader'
 import type { Seller } from '~/types/Seller'
+import {
+  Store, Pencil, Save, X, LogOut, LoaderCircle, ImagePlus, ArrowLeft, Facebook, Instagram, Twitter, Linkedin
+} from 'lucide-vue-next'
+
+const platformIcons: Record<string, any> = {
+  facebook: Facebook,
+  instagram: Instagram,
+  twitter: Twitter,
+  linkedin: Linkedin,
+}
 
 const router = useRouter()
 const auth = getAuth()
 const { getMe, updateSeller } = useSellers()
 const { addToast } = useToast()
 const { uploadImage } = useCloudinaryUploader()
+const goBack = () => router.back()
 
 const isEditing = ref(false)
 const isUploadingLogo = ref(false)
@@ -167,30 +178,51 @@ const paymentMethodsString = computed({
 </script>
 
 <template>
-  <div class="flex justify-center items-center min-h-screen bg-gray-100 p-4">
-    <div class="max-w-3xl w-full bg-white p-8 rounded shadow-lg space-y-6 overflow-auto max-h-[90vh]">
-      <h2 class="text-3xl font-semibold text-center">Profil Store</h2>
+  <div class="flex justify-center items-center bg-gray-100 p-4 min-h-screen">
+    <div class="w-full max-w-4xl bg-white p-6 sm:p-10 rounded-xl shadow space-y-8">
 
-      <div v-if="loading" class="text-center text-gray-500">Memuat data...</div>
+      <!-- Header -->
+       <NuxtLink
+        to="/seller/profile"
+        class="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+      >
+        <ArrowLeft class="w-7 h-7 text-white" /> Back to Profile
+      </NuxtLink>
+      <div class="flex items-center justify-center gap-2 text-3xl font-semibold text-gray-800">
+        <Store class="w-7 h-7 text-blue-600" />
+        Profil Store
+      </div>
+
+      <!-- Loading / Error -->
+      <div v-if="loading" class="text-center text-gray-500">Loading data...</div>
       <div v-else-if="error" class="text-center text-red-500">{{ error }}</div>
 
+      <!-- Profile Form -->
       <template v-else-if="seller">
         <!-- Logo & Banner -->
-        <div class="flex flex-col sm:flex-row sm:space-x-6 items-center">
+        <div class="flex flex-col sm:flex-row sm:space-x-10 items-center justify-center">
+
+          <!-- Logo -->
           <div class="flex flex-col items-center">
-            <img
-              v-if="editableSeller.storeLogoUrl"
-              :src="editableSeller.storeLogoUrl"
-              alt="Store Logo"
-              class="w-32 h-32 object-cover rounded-md border"
-            />
-            <div v-else class="w-32 h-32 bg-gray-200 rounded-md flex items-center justify-center text-gray-400">
-              No Logo
+            <div
+              class="w-36 h-36 rounded-md border border-gray-300 shadow-sm overflow-hidden bg-gray-50 flex items-center justify-center"
+              :class="{'border-blue-500': isEditing}"
+              title="Recommended size logo: 144x144px"
+            >
+              <img
+                v-if="editableSeller.storeLogoUrl"
+                :src="editableSeller.storeLogoUrl"
+                alt="Store Logo"
+                class="w-full h-full object-cover"
+              />
+              <span v-else class="text-gray-400 select-none">No Logo</span>
             </div>
+
             <label
               v-if="isEditing"
-              class="mt-2 cursor-pointer text-blue-600 hover:underline text-sm"
+              class="mt-3 flex items-center gap-1 cursor-pointer text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm font-medium"
             >
+              <ImagePlus class="w-5 h-5" />
               Upload Logo
               <input
                 type="file"
@@ -200,23 +232,41 @@ const paymentMethodsString = computed({
                 :disabled="isUploadingLogo"
               />
             </label>
-            <p v-if="isUploadingLogo" class="text-xs text-gray-500 mt-1">Uploading logo...</p>
+
+            <p
+              v-if="isUploadingLogo"
+              class="text-xs text-gray-500 mt-1 flex items-center gap-1 select-none"
+            >
+              <LoaderCircle class="w-4 h-4 animate-spin" />
+              Uploading logo...
+            </p>
+
+            <p class="mt-1 text-xs text-gray-400 italic select-none">
+              * Ukuran ideal logo 144x144 px
+            </p>
           </div>
 
-          <div class="flex flex-col items-center mt-4 sm:mt-0">
-            <img
-              v-if="editableSeller.storeBannerUrl"
-              :src="editableSeller.storeBannerUrl"
-              alt="Store Banner"
-              class="w-64 h-32 object-cover rounded-md border"
-            />
-            <div v-else class="w-64 h-32 bg-gray-200 rounded-md flex items-center justify-center text-gray-400">
-              No Banner
+          <!-- Banner -->
+          <div class="flex flex-col items-center mt-8 sm:mt-0">
+            <div
+              class="w-72 h-40 rounded-md border border-gray-300 shadow-sm overflow-hidden bg-gray-50 flex items-center justify-center"
+              :class="{'border-blue-500': isEditing}"
+              title="Ukuran ideal banner: 720x400px"
+            >
+              <img
+                v-if="editableSeller.storeBannerUrl"
+                :src="editableSeller.storeBannerUrl"
+                alt="Store Banner"
+                class="w-full h-full object-cover"
+              />
+              <span v-else class="text-gray-400 select-none">No Banner</span>
             </div>
+
             <label
               v-if="isEditing"
-              class="mt-2 cursor-pointer text-blue-600 hover:underline text-sm"
+              class="mt-3 flex items-center gap-1 cursor-pointer text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm font-medium"
             >
+              <ImagePlus class="w-5 h-5" />
               Upload Banner
               <input
                 type="file"
@@ -226,14 +276,29 @@ const paymentMethodsString = computed({
                 :disabled="isUploadingBanner"
               />
             </label>
-            <p v-if="isUploadingBanner" class="text-xs text-gray-500 mt-1">Uploading banner...</p>
+
+            <p
+              v-if="isUploadingBanner"
+              class="text-xs text-gray-500 mt-1 flex items-center gap-1 select-none"
+            >
+              <LoaderCircle class="w-4 h-4 animate-spin" />
+              Uploading banner...
+            </p>
+
+            <p class="mt-1 text-xs text-gray-400 italic select-none">
+              * Ukuran ideal banner 720x400 px
+            </p>
           </div>
+
         </div>
 
-        <!-- Store Info -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+        <hr />
+
+        <!-- Informasi Umum -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label class="font-semibold">Nama Toko:</label>
+            <label class="font-semibold">Store Name:</label>
             <div v-if="isEditing">
               <input v-model="editableSeller.storeName" class="form-input w-full border rounded p-2" />
             </div>
@@ -249,7 +314,7 @@ const paymentMethodsString = computed({
           </div>
 
           <div>
-            <label class="font-semibold">Telepon:</label>
+            <label class="font-semibold">Phone:</label>
             <div v-if="isEditing">
               <input v-model="editableSeller.phone" class="form-input w-full border rounded p-2" />
             </div>
@@ -257,7 +322,7 @@ const paymentMethodsString = computed({
           </div>
 
           <div>
-            <label class="font-semibold">Alamat:</label>
+            <label class="font-semibold">Address:</label>
             <div v-if="isEditing">
               <textarea v-model="editableSeller.address" class="form-textarea w-full border rounded p-2" rows="2" />
             </div>
@@ -270,154 +335,119 @@ const paymentMethodsString = computed({
               <input v-model="editableSeller.website" class="form-input w-full border rounded p-2" />
             </div>
             <div v-else-if="seller.website">
-              <a :href="seller.website" class="text-blue-600 hover:underline" target="_blank">
-                {{ seller.website }}
-              </a>
+              <a :href="seller.website" class="text-blue-600 hover:underline" target="_blank">{{ seller.website }}</a>
             </div>
             <div v-else>-</div>
           </div>
 
           <div class="col-span-2">
-            <label class="font-semibold">Deskripsi Toko:</label>
+            <label class="font-semibold">Store Description:</label>
             <div v-if="isEditing">
               <textarea v-model="editableSeller.storeDescription" class="form-textarea w-full border rounded p-2" rows="3" />
             </div>
             <div v-else>{{ seller.storeDescription || '-' }}</div>
           </div>
+        </div>
 
-          <!-- Social Media Links -->
-          <div class="col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div>
-              <label class="font-semibold">Facebook:</label>
-              <div v-if="isEditing">
-                <input
-                  v-model="editableSeller.socialMediaLinks!.facebook"
-                  class="form-input w-full border rounded p-2"
-                />
-              </div>
-              <div v-else-if="seller.socialMediaLinks?.facebook">
-                <a :href="seller.socialMediaLinks.facebook" target="_blank" class="text-blue-600 hover:underline">
-                  {{ seller.socialMediaLinks.facebook }}
-                </a>
-              </div>
-              <div v-else>-</div>
+        <hr />
+
+        <!-- Social Media -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div
+            v-for="(platform, key) in editableSeller.socialMediaLinks"
+            :key="key"
+            class="flex flex-col break-words"
+          >
+            <!-- Label + Icon -->
+            <label class="flex items-center gap-1 font-semibold capitalize mb-1">
+              <component :is="platformIcons[key]" class="w-4 h-4" />
+              {{ key }}
+            </label>
+
+            <!-- Edit Mode -->
+            <div v-if="isEditing">
+              <input
+                v-model="editableSeller.socialMediaLinks![key]"
+                class="form-input w-full border rounded p-2"
+                placeholder="Enter link"
+              />
             </div>
 
-            <div>
-              <label class="font-semibold">Instagram:</label>
-              <div v-if="isEditing">
-                <input
-                  v-model="editableSeller.socialMediaLinks!.instagram"
-                  class="form-input w-full border rounded p-2"
-                />
-              </div>
-              <div v-else-if="seller.socialMediaLinks?.instagram">
-                <a :href="seller.socialMediaLinks.instagram" target="_blank" class="text-pink-600 hover:underline">
-                  {{ seller.socialMediaLinks.instagram }}
-                </a>
-              </div>
-              <div v-else>-</div>
+            <!-- View Mode with link -->
+            <div v-else-if="seller.socialMediaLinks?.[key]">
+              <a
+                :href="seller.socialMediaLinks[key]"
+                target="_blank"
+                class="text-blue-600 hover:underline break-all"
+              >
+                {{ seller.socialMediaLinks[key] }}
+              </a>
             </div>
 
-            <div>
-              <label class="font-semibold">Twitter:</label>
-              <div v-if="isEditing">
-                <input
-                  v-model="editableSeller.socialMediaLinks!.twitter"
-                  class="form-input w-full border rounded p-2"
-                />
-              </div>
-              <div v-else-if="seller.socialMediaLinks?.twitter">
-                <a :href="seller.socialMediaLinks.twitter" target="_blank" class="text-blue-400 hover:underline">
-                  {{ seller.socialMediaLinks.twitter }}
-                </a>
-              </div>
-              <div v-else>-</div>
-            </div>
+            <!-- View Mode empty -->
+            <div v-else class="text-gray-400">-</div>
+          </div>
+        </div>
 
-            <div>
-              <label class="font-semibold">LinkedIn:</label>
-              <div v-if="isEditing">
-                <input
-                  v-model="editableSeller.socialMediaLinks!.linkedin"
-                  class="form-input w-full border rounded p-2"
-                />
-              </div>
-              <div v-else-if="seller.socialMediaLinks?.linkedin">
-                <a :href="seller.socialMediaLinks.linkedin" target="_blank" class="text-blue-700 hover:underline">
-                  {{ seller.socialMediaLinks.linkedin }}
-                </a>
-              </div>
-              <div v-else>-</div>
+        <hr />
+
+        <!-- Lokasi -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="font-semibold">Province:</label>
+            <div v-if="isEditing">
+              <input v-model="editableSeller.location!.province" class="form-input w-full border rounded p-2" />
             </div>
+            <div v-else>{{ seller.location?.province || '-' }}</div>
           </div>
 
-          <!-- Location -->
-          <div class="col-span-2 grid grid-cols-2 gap-4">
-            <div>
-                <label class="font-semibold">Provinsi:</label>
-                <div v-if="isEditing">
-                <input
-                    v-model="editableSeller.location!.province"
-                    class="form-input w-full border rounded p-2"
-                />
-                </div>
-                <div v-else>{{ seller.location?.province || '-' }}</div>
+          <div>
+            <label class="font-semibold">City:</label>
+            <div v-if="isEditing">
+              <input v-model="editableSeller.location!.city" class="form-input w-full border rounded p-2" />
             </div>
-
-            <div>
-                <label class="font-semibold">Kota:</label>
-                <div v-if="isEditing">
-                <input
-                    v-model="editableSeller.location!.city"
-                    class="form-input w-full border rounded p-2"
-                />
-                </div>
-                <div v-else>{{ seller.location?.city || '-' }}</div>
-            </div>
-
-            <div>
-                <label class="font-semibold">Kecamatan:</label>
-                <div v-if="isEditing">
-                <input
-                    v-model="editableSeller.location!.district"
-                    class="form-input w-full border rounded p-2"
-                />
-                </div>
-                <div v-else>{{ seller.location?.district || '-' }}</div>
-            </div>
-
-            <div>
-                <label class="font-semibold">Kode Pos:</label>
-                <div v-if="isEditing">
-                <input
-                    v-model="editableSeller.location!.postalCode"
-                    class="form-input w-full border rounded p-2"
-                />
-                </div>
-                <div v-else>{{ seller.location?.postalCode || '-' }}</div>
-            </div>
+            <div v-else>{{ seller.location?.city || '-' }}</div>
           </div>
 
-          <!-- Optional Policies -->
-          <div class="col-span-2">
-            <label class="font-semibold">Kebijakan Pengembalian:</label>
+          <div>
+            <label class="font-semibold">District:</label>
+            <div v-if="isEditing">
+              <input v-model="editableSeller.location!.district" class="form-input w-full border rounded p-2" />
+            </div>
+            <div v-else>{{ seller.location?.district || '-' }}</div>
+          </div>
+
+          <div>
+            <label class="font-semibold">Postal Code:</label>
+            <div v-if="isEditing">
+              <input v-model="editableSeller.location!.postalCode" class="form-input w-full border rounded p-2" />
+            </div>
+            <div v-else>{{ seller.location?.postalCode || '-' }}</div>
+          </div>
+        </div>
+
+        <hr />
+
+        <!-- Kebijakan -->
+        <div class="grid grid-cols-1 gap-4">
+          <div>
+            <label class="font-semibold">Return Policy:</label>
             <div v-if="isEditing">
               <textarea v-model="editableSeller.returnPolicy" class="form-textarea w-full border rounded p-2" rows="3" />
             </div>
             <div v-else>{{ seller.returnPolicy || '-' }}</div>
           </div>
 
-          <div class="col-span-2">
-            <label class="font-semibold">Kebijakan Pengiriman:</label>
+          <div>
+            <label class="font-semibold">Shipping Policy:</label>
             <div v-if="isEditing">
               <textarea v-model="editableSeller.shippingPolicy" class="form-textarea w-full border rounded p-2" rows="3" />
             </div>
             <div v-else>{{ seller.shippingPolicy || '-' }}</div>
           </div>
 
-          <div class="col-span-2">
-            <label class="font-semibold">Metode Pembayaran (pisahkan dengan koma):</label>
+          <div>
+            <label class="font-semibold">Payment Methods:</label>
             <div v-if="isEditing">
               <input
                 v-model="paymentMethodsString"
@@ -425,41 +455,41 @@ const paymentMethodsString = computed({
                 placeholder="e.g. Credit Card, Bank Transfer, COD"
               />
             </div>
-            <div v-else>
-              {{ seller.paymentMethods?.join(', ') || '-' }}
-            </div>
+            <div v-else>{{ seller.paymentMethods?.join(', ') || '-' }}</div>
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="mt-6 flex justify-between items-center">
+        <!-- Tombol Aksi -->
+        <div class="mt-6 flex flex-wrap gap-4 justify-between items-center">
           <button
             @click="isEditing ? saveChanges() : isEditing = true"
-            class="bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700 transition"
+            class="flex items-center gap-2 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
             :disabled="saving || isUploadingLogo || isUploadingBanner"
           >
-            {{ isEditing ? (saving ? 'Menyimpan...' : 'Simpan') : 'Edit Profil' }}
+            <component :is="isEditing ? Save : Pencil" class="w-4 h-4" />
+            <span>{{ isEditing ? (saving ? 'Saving...' : 'Save') : 'Edit Profile' }}</span>
+            <LoaderCircle v-if="saving" class="w-4 h-4 animate-spin ml-2" />
           </button>
 
           <button
             v-if="isEditing"
             @click="cancelEdit"
-            class="bg-gray-400 text-white py-2 px-6 rounded hover:bg-gray-500 transition"
+            class="flex items-center gap-2 bg-gray-400 text-white py-2 px-4 rounded hover:bg-gray-500 transition"
             :disabled="saving || isUploadingLogo || isUploadingBanner"
           >
-            Batal
+            <X class="w-4 h-4" /> Cancel
           </button>
 
           <button
             @click="handleLogout"
-            class="bg-red-600 text-white py-2 px-6 rounded hover:bg-red-700 transition"
+            class="flex items-center gap-2 bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition"
           >
-            Logout
+            <LogOut class="w-4 h-4" /> Logout
           </button>
         </div>
       </template>
 
-      <div v-else class="text-center text-gray-500">Data seller tidak ditemukan.</div>
+      <div v-else class="text-center text-gray-500">Seller not found.</div>
     </div>
   </div>
 </template>

@@ -188,33 +188,42 @@ getUid().then(() => {
         </div>
 
         <!-- Actions -->
-        <div class="mt-10 flex flex-col sm:flex-row justify-between gap-3 sm:items-center">
-          <div class="flex gap-2 flex-wrap w-full sm:w-auto">
-            <button
-              v-if="!isEditing"
-              @click="isEditing = true"
-              class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition w-full sm:w-auto"
-            >
-              <PencilLine class="w-4 h-4" /> Edit Profile
-            </button>
+      <div class="mt-10 flex flex-col sm:flex-row justify-between gap-3 sm:items-center">
+        <div class="flex gap-2 flex-wrap w-full sm:w-auto">
+          <button
+            v-if="!isEditing"
+            @click="isEditing = true"
+            class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition w-full sm:w-auto"
+          >
+            <PencilLine class="w-4 h-4" /> Edit Profile
+          </button>
 
-            <div v-else class="flex gap-2 w-full sm:w-auto flex-wrap">
-              <button
-                @click="saveChanges"
-                :disabled="isUploading"
-                class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm transition w-full sm:w-auto"
-              >
-                <Save class="w-4 h-4" /> Save
-              </button>
-              <button
-                @click="cancelEdit"
-                :disabled="isUploading"
-                class="flex items-center gap-2 bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded-md text-sm transition w-full sm:w-auto"
-              >
-                <XCircle class="w-4 h-4" /> Cancel
-              </button>
-            </div>
+          <div v-else class="flex gap-2 w-full sm:w-auto flex-wrap">
+            <button
+              @click="saveChanges"
+              :disabled="isUploading"
+              class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm transition w-full sm:w-auto"
+            >
+              <Save class="w-4 h-4" /> Save
+            </button>
+            <button
+              @click="cancelEdit"
+              :disabled="isUploading"
+              class="flex items-center gap-2 bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded-md text-sm transition w-full sm:w-auto"
+            >
+              <XCircle class="w-4 h-4" /> Cancel
+            </button>
           </div>
+        </div>
+
+        <div class="flex gap-2 flex-wrap w-full sm:w-auto">
+          <NuxtLink
+            to="/seller/profileStore"
+            class="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm transition w-full sm:w-auto"
+          >
+            <!-- Kamu bisa pakai icon lucide lain, misal Store -->
+            <UserCog class="w-4 h-4" /> Store Profile
+          </NuxtLink>
 
           <NuxtLink
             to="/auth/logout"
@@ -223,6 +232,7 @@ getUid().then(() => {
             <LogOut class="w-4 h-4" /> Logout
           </NuxtLink>
         </div>
+      </div>
       </template>
     </div>
   </div>
