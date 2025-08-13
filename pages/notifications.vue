@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useNotifications } from '~/composables/useNotifications'
+import { useNotifications } from '~/composables/notification/useNotifications'
 import { LoaderCircle, CheckCircle2, Trash2 } from 'lucide-vue-next'
 import type { Notification } from '~/types/Notification'
 

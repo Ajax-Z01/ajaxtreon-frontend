@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue'
 import ModalCreateUser from '~/components/modal/CreateUser.vue'
 import ModalEditUser from '~/components/modal/EditUser.vue'
-import { useUsers } from '~/composables/useUsers'
-import { useToast } from '~/composables/useToast'
+import { useUsers } from '~/composables/user/useUsers'
+import { useToast } from '~/composables/utils/useToast'
 import type { User, UserUpdateInput } from '~/types/User'
 import { Plus, Edit3, Trash2, LoaderCircle } from 'lucide-vue-next'
 

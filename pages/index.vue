@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router'
 import { onAuthStateChanged, getAuth } from 'firebase/auth'
 import { ref, computed, onMounted } from 'vue'
-import { getCurrentUserWithRole } from '~/composables/getCurrentUser'
+import { getCurrentUserWithRole } from '~/composables/auth/getCurrentUser'
 
 const router = useRouter()
 

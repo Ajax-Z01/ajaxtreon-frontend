@@ -1,5 +1,5 @@
 import { useRuntimeConfig, useFetch, createError, useCookie } from '#app'
-import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
+import { getCurrentUserWithToken } from '~/composables/auth/getCurrentUser'
 import type { Notification } from '~/types/Notification'
 
 export const useNotifications = () => {

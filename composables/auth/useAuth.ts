@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { useRuntimeConfig, useState, createError } from '#app'
-import { getCurrentUserWithRole } from '~/composables/getCurrentUser'
+import { getCurrentUserWithRole } from '~/composables/auth/getCurrentUser'
 import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import type { User, UserRole } from '~/types/User'
 import { useUserStore } from '~/stores/userStore'

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
-import { useAuth } from '~/composables/useAuth'
-import { usePayment } from '~/composables/usePayments'
+import { useAuth } from '~/composables/auth/useAuth'
+import { usePayment } from '~/composables/payment/usePayments'
 import type { PaymentData } from '~/types/Payment'
 import ModalCreatePayment from '~/components/modal/CreatePayment.vue'
-import { useToast } from '~/composables/useToast'
+import { useToast } from '~/composables/utils/useToast'
 import { Plus, Trash2, CheckCircle2, Clock3, LoaderCircle } from 'lucide-vue-next'
 
 const { currentUser } = useAuth()

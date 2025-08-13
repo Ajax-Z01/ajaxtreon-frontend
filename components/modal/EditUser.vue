@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
-import { validateUserInput } from '~/composables/useUserValidation'
+import { validateUserInput } from '~/composables/user/useUserValidation'
 import type { User, UserRole } from '~/types/User'
 import { X, User as UserIcon, Mail, Phone, MapPin, Lock, ShieldCheck } from 'lucide-vue-next'
 

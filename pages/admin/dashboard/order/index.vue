@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useOrders } from '~/composables/useOrders'
-import { useProducts } from '~/composables/useProducts'
+import { useOrders } from '~/composables/order/useOrders'
+import { useProducts } from '~/composables/inventory/useProducts'
 import type { Order, OrderItem, OrderStatus, CreateOrderPayload } from '~/types/Order'
-import { useCustomers } from '~/composables/useCustomers'
-import { useToast } from '~/composables/useToast'
-import { useAuth } from '~/composables/useAuth'
+import { useCustomers } from '~/composables/customer/useCustomers'
+import { useToast } from '~/composables/utils/useToast'
+import { useAuth } from '~/composables/auth/useAuth'
 import type { Customer } from '~/types/Customer'
 
 const { getOrders, addOrder, updateOrder, deleteOrder } = useOrders()

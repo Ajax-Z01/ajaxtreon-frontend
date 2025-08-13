@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue'
 import ModalCreateSeller from '~/components/modal/CreateSeller.vue'
 import ModalEditSeller from '~/components/modal/EditSeller.vue'
-import { useSellers } from '~/composables/useSellers'
-import { useToast } from '~/composables/useToast'
+import { useSellers } from '~/composables/seller/useSellers'
+import { useToast } from '~/composables/utils/useToast'
 import type { Seller, SellerCreateInput, SellerUpdatePayload } from '~/types/Seller'
 
 const sellers = ref<Seller[]>([])

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useAuth } from '~/composables/useAuth'
-import { useCategories } from '~/composables/useCategories'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useCategories } from '~/composables/inventory/useCategories'
 import type { Category } from '~/types/Category'
-import { useToast } from '~/composables/useToast'
+import { useToast } from '~/composables/utils/useToast'
 
 const { getCategories, addCategory, deleteCategory, updateCategory } = useCategories()
 const { currentUser } = useAuth()

@@ -1,75 +1,124 @@
-# Nuxt Minimal Starter
+# Ajaxtreon Frontend (ERP)
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Ajaxtreon Frontend adalah aplikasi web ERP berbasis **Nuxt 3** yang digunakan untuk mengelola data internal seperti inventori, pesanan, pembelian, pelanggan, pemasok, laporan, dan modul CRM. Frontend ini terintegrasi langsung dengan backend Ajaxtreon.
 
-## Setup
+---
 
-Make sure to install dependencies:
+## 📦 Fitur Utama
+
+* Login & role-based access control (Admin/User)
+* Dashboard ringkasan data
+* Manajemen inventori (produk, kategori, stok)
+* Manajemen pesanan & pembayaran
+* Manajemen pembelian dan supplier
+* Manajemen pelanggan dan pemasok
+* Modul CRM (Lead, Contact, Opportunity, Activity)
+* Dashboard laporan
+* Upload gambar dengan Cloudinary
+* UI responsif untuk desktop dan mobile
+
+---
+
+## 🚀 Teknologi yang Digunakan
+
+* **Nuxt 3** – Framework Vue terbaru
+* **TypeScript** – Pengetikan statis
+* **Tailwind CSS** – Styling utility-first
+* **Lucide Icons** – Ikon SVG
+* **Firebase Authentication** – Autentikasi pengguna
+* **Cloudinary** – Penyimpanan gambar
+* **Pinia** – Manajemen state
+* **Axios** atau `useFetch` – HTTP client
+
+---
+
+## 📂 Struktur Direktori
+
+```
+src/
+├── components/      # Komponen UI reusable  
+├── composables/     # Reusable logic seperti API composables  
+├── layouts/         # Layout halaman  
+├── pages/           # Halaman aplikasi  
+├── plugins/         # Plugin Nuxt  
+├── stores/          # Pinia stores  
+├── assets/          # Gambar dan style global  
+├── types/           # TypeScript types  
+└── utils/           # Helper functions  
+```
+
+---
+
+## 🔧 Instalasi
+
+### Prasyarat
+
+* Node.js 18.x atau lebih baru
+* NPM / Yarn / pnpm
+
+### Langkah-langkah
+
+1. **Clone repository**
 
 ```bash
-# npm
+git clone https://github.com/Ajax-Z01/ajaxtreon-frontend.git
+cd ajaxtreon-frontend
+```
+
+2. **Install dependencies**
+
+```bash
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+# atau yarn install
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+3. **Salin dan konfigurasi file `.env`**
 
 ```bash
-# npm
+cp .env.example .env
+```
+
+Isi dengan variabel:
+
+```
+NUXT_PUBLIC_API_BASE=https://api.ajaxtreon.com
+NUXT_PUBLIC_FIREBASE_API_KEY=...
+NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NUXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NUXT_PUBLIC_FIREBASE_APP_ID=...
+
+NUXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
+
+MIDTRANS_CLIENT_KEY=...
+```
+
+---
+
+## ▶️ Menjalankan Proyek
+
+### Jalankan mode development
+
+```bash
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
-
-Build the application for production:
+### Build & Preview production
 
 ```bash
-# npm
 npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+npm run preview
 ```
 
-Locally preview production build:
+### Linting & Format
 
 ```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
+npm run lint
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+---
+
+## 📄 Lisensi
+
+MIT License

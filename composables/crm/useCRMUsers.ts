@@ -1,11 +1,10 @@
 import { useRuntimeConfig, useFetch, createError, useState } from '#app'
-import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
-import type { User, UserUpdateInput } from '~/types/User'
+import { getCurrentUserWithToken } from '~/composables/auth/getCurrentUser'
+import type { CRMUser, CRMUserCreateInput, CRMUserUpdatePayload } from '~/types/CRMUser'
 
-export const useUsers = () => {
+export const useCRMUsers = () => {
   const baseUrl = useRuntimeConfig().public.apiBaseUrl
 
-  // Store user token in state
   const userToken = useState<string | null>('userToken', () => {
     if (process.client) {
       return localStorage.getItem('userToken')
@@ -24,11 +23,9 @@ export const useUsers = () => {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     }
-
     if (userToken.value) {
       headers['Authorization'] = `Bearer ${userToken.value}`
     }
-
     return headers
   }
 
@@ -43,11 +40,30 @@ export const useUsers = () => {
     }
   }
 
-  const getUsers = async (): Promise<User[]> => {
+  // Public: get user by email (no auth)
+  const getUserByEmail = async (email: string): Promise<CRMUser | null> => {
+    try {
+      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/users/email/${email}`, {
+        method: 'GET',
+      })
+
+      if (error.value) {
+        throw createError({ statusCode: 500, message: 'Failed to fetch user by email' })
+      }
+
+      return data.value || null
+    } catch (err) {
+      console.error('Error fetching user by email:', err)
+      throw createError({ statusCode: 500, message: 'Failed to fetch user by email' })
+    }
+  }
+
+  // Authenticated routes
+  const getCRMUsers = async (): Promise<CRMUser[]> => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<User[]>(`${baseUrl}/user`, {
+      const { data, error } = await useFetch<CRMUser[]>(`${baseUrl}/users`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -63,11 +79,11 @@ export const useUsers = () => {
     }
   }
 
-  const getUserById = async (id: string): Promise<User | null> => {
+  const getCRMUserById = async (id: string): Promise<CRMUser | null> => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<User>(`${baseUrl}/user/${id}`, {
+      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/users/${id}`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -83,14 +99,14 @@ export const useUsers = () => {
     }
   }
 
-  const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
+  const createCRMUser = async (payload: CRMUserCreateInput): Promise<CRMUser> => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<User>(`${baseUrl}/user`, {
+      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/users`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(userData),
+        body: JSON.stringify(payload),
       })
 
       if (error.value) {
@@ -104,14 +120,14 @@ export const useUsers = () => {
     }
   }
 
-  const updateUserInfo = async (id: string, updatedData: UserUpdateInput): Promise<User> => {
+  const updateCRMUser = async (id: string, payload: CRMUserUpdatePayload): Promise<CRMUser> => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<User>(`${baseUrl}/user/${id}`, {
+      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/users/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
-        body: JSON.stringify(updatedData),
+        body: JSON.stringify(payload),
       })
 
       if (error.value) {
@@ -125,11 +141,11 @@ export const useUsers = () => {
     }
   }
 
-  const deleteUserInfo = async (id: string): Promise<void> => {
+  const deleteCRMUser = async (id: string): Promise<void> => {
     try {
       await ensureToken()
 
-      const { error } = await useFetch(`${baseUrl}/user/${id}`, {
+      const { error } = await useFetch(`${baseUrl}/users/${id}`, {
         method: 'DELETE',
         headers: getHeaders(),
       })
@@ -143,34 +159,13 @@ export const useUsers = () => {
     }
   }
 
-  const setUserRole = async (id: string, role: string): Promise<User> => {
-    try {
-      await ensureToken()
-
-      const { data, error } = await useFetch<User>(`${baseUrl}/user/${id}/role`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: { role },
-      })
-
-      if (error.value) {
-        throw createError({ statusCode: 500, message: 'Failed to set user role' })
-      }
-
-      return data.value!
-    } catch (err) {
-      console.error('Error setting user role:', err)
-      throw createError({ statusCode: 500, message: 'Failed to set user role' })
-    }
-  }
-
   return {
     ensureToken,
-    getUsers,
-    getUserById,
-    createUser,
-    updateUserInfo,
-    deleteUserInfo,
-    setUserRole,
+    getUserByEmail,
+    getCRMUsers,
+    getCRMUserById,
+    createCRMUser,
+    updateCRMUser,
+    deleteCRMUser,
   }
 }

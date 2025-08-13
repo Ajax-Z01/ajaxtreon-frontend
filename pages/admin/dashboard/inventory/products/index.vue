@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
-import { useAuth } from '~/composables/useAuth'
-import { useProducts } from '~/composables/useProducts'
-import { useCategories } from '~/composables/useCategories'
-import { useCloudinaryUploader } from '~/composables/useCloudinaryUploader'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useProducts } from '~/composables/inventory/useProducts'
+import { useCategories } from '~/composables/inventory/useCategories'
+import { useCloudinaryUploader } from '~/composables/utils/useCloudinaryUploader'
 import AddProductModal from '~/components/modal/CreateProduct.vue'
 import EditProductModal from '~/components/modal/EditProduct.vue'
 import type { Product, CreateProductPayload, UpdateProductPayload } from '~/types/Product'
 import AppProductCard from '~/components/card/AppProductCard.vue'
-import { useToast } from '~/composables/useToast'
+import { useToast } from '~/composables/utils/useToast'
 import { ArrowLeft, PlusCircle } from 'lucide-vue-next'
 
 const { getProducts, addProduct, updateProduct, deleteProduct } = useProducts()

@@ -2,9 +2,9 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAuth, signOut } from 'firebase/auth'
-import { useSellers } from '~/composables/useSellers'
-import { useToast } from '~/composables/useToast'
-import { useCloudinaryUploader } from '~/composables/useCloudinaryUploader'
+import { useSellers } from '~/composables/seller/useSellers'
+import { useToast } from '~/composables/utils/useToast'
+import { useCloudinaryUploader } from '~/composables/utils/useCloudinaryUploader'
 import type { Seller } from '~/types/Seller'
 import {
   Store, Pencil, Save, X, LogOut, LoaderCircle, ImagePlus, ArrowLeft, Facebook, Instagram, Twitter, Linkedin

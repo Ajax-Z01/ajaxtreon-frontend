@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { useReports } from '~/composables/useReports'
+import { useReports } from '~/composables/report/useReports'
 import type {
   ReportQuery,
   SalesReportItem,

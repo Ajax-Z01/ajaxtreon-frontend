@@ -1,5 +1,5 @@
 import { useRuntimeConfig, useFetch, createError, useState } from '#app'
-import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
+import { getCurrentUserWithToken } from '~/composables/auth/getCurrentUser'
 import type { Customer, CustomerCreateInput, CustomerUpdatePayload } from '~/types/Customer'
 
 export const useCustomers = () => {

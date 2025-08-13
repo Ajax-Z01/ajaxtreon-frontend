@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue'
 import ModalCreateCustomer from '~/components/modal/CreateCustomer.vue'
 import ModalEditCustomer from '~/components/modal/EditCustomer.vue'
-import { useCustomers } from '~/composables/useCustomers'
-import { useToast } from '~/composables/useToast'
+import { useCustomers } from '~/composables/customer/useCustomers'
+import { useToast } from '~/composables/utils/useToast'
 import type { Customer, CustomerCreateInput, CustomerUpdateInput } from '~/types/Customer'
 
 const customers = ref<Customer[]>([])

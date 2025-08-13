@@ -1,5 +1,5 @@
 import type { Category } from '~/types/Category'
-import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
+import { getCurrentUserWithToken } from '~/composables/auth/getCurrentUser'
 
 export const useCategories = () => {
   const config = useRuntimeConfig()

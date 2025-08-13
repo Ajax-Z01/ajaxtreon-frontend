@@ -2,7 +2,7 @@
 import { watch, ref } from 'vue'
 import type { UpdateProductPayload } from '~/types/Product'
 import type { Category } from '~/types/Category'
-import { useCloudinaryUploader } from '~/composables/useCloudinaryUploader'
+import { useCloudinaryUploader } from '~/composables/utils/useCloudinaryUploader'
 import { Pencil, X, UploadCloud } from 'lucide-vue-next'
 
 const props = defineProps<{

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuth } from '~/composables/useAuth'
-import { useProducts } from '~/composables/useProducts'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useProducts } from '~/composables/inventory/useProducts'
 import type { Product } from '~/types/Product'
 
 const router = useRouter()

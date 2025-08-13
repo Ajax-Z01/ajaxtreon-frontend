@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import type { Category } from '~/types/Category'
 import type { CreateProductPayload } from '~/types/Product'
-import { useCloudinaryUploader } from '~/composables/useCloudinaryUploader'
+import { useCloudinaryUploader } from '~/composables/utils/useCloudinaryUploader'
 import { PlusCircle, X, Upload, Image as ImageIcon } from 'lucide-vue-next'
 
 const props = defineProps<{

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import { useAuth } from '~/composables/useAuth'
-import { useStocks } from '~/composables/useStocks'
-import { useProducts } from '~/composables/useProducts'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useStocks } from '~/composables/inventory/useStocks'
+import { useProducts } from '~/composables/inventory/useProducts'
 import type { Product } from '~/types/Product'
-import { useToast } from '~/composables/useToast'
+import { useToast } from '~/composables/utils/useToast'
 
 const { getStocks, addStock, subtractStock, getStockHistory } = useStocks()
 const { getProducts } = useProducts()

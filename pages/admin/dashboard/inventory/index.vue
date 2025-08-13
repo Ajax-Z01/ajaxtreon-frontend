@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useProducts } from '~/composables/useProducts'
-import { useCategories } from '~/composables/useCategories'
-import { useAuth } from '~/composables/useAuth'
+import { useProducts } from '~/composables/inventory/useProducts'
+import { useCategories } from '~/composables/inventory/useCategories'
+import { useAuth } from '~/composables/auth/useAuth'
 import { Package, FolderKanban, CheckCircle2, XCircle, ArrowLeft, Box, Layers, BarChart } from 'lucide-vue-next'
 
 const router = useRouter()

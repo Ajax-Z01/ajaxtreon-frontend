@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
-import { validateSellerInput } from '~/composables/useSellerValidation'
+import { validateSellerInput } from '~/composables/seller/useSellerValidation'
 import { X, UserPlus } from 'lucide-vue-next'
 
 const errors = ref<Record<string, string>>({})

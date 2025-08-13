@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, toRaw } from 'vue'
-import { usePurchases } from '~/composables/usePurchases'
-import { useProducts } from '~/composables/useProducts'
-import { useSuppliers } from '~/composables/useSuppliers'
-import { useAuth } from '~/composables/useAuth'
-import { useToast } from '~/composables/useToast'
+import { usePurchases } from '~/composables/purchase/usePurchases'
+import { useProducts } from '~/composables/inventory/useProducts'
+import { useSuppliers } from '~/composables/supplier/useSuppliers'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useToast } from '~/composables/utils/useToast'
 import type { Purchase, PurchaseStatus } from '~/types/Purchase'
 
 import { Plus, Edit, Trash2, LoaderCircle } from 'lucide-vue-next'

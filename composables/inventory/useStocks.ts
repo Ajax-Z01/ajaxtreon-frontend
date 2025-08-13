@@ -1,6 +1,6 @@
 import type { StockChangePayload } from '~/types/Stock'
-import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
-import { useProducts } from '~/composables/useProducts'
+import { getCurrentUserWithToken } from '~/composables/auth/getCurrentUser'
+import { useProducts } from '~/composables/inventory/useProducts'
 
 export const useStocks = () => {
   const config = useRuntimeConfig()

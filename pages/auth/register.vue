@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useRegister } from '~/composables/useRegister'
+import { useRegister } from '~/composables/auth/useRegister'
 import { useUserStore } from '~/stores/userStore'
 
 const email = ref('')

@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue'
 import ModalCreateSupplier from '~/components/modal/CreateSupplier.vue'
 import ModalEditSupplier from '~/components/modal/EditSupplier.vue'
-import { useSuppliers } from '~/composables/useSuppliers'
-import { useToast } from '~/composables/useToast'
+import { useSuppliers } from '~/composables/supplier/useSuppliers'
+import { useToast } from '~/composables/utils/useToast'
 import type { Supplier, SupplierCreateInput, SupplierUpdateInput } from '~/types/Supplier'
 
 const suppliers = ref<Supplier[]>([])

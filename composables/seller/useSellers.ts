@@ -1,5 +1,5 @@
 import { useRuntimeConfig, useFetch, createError, useState } from '#app'
-import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
+import { getCurrentUserWithToken } from '~/composables/auth/getCurrentUser'
 import type { Seller, SellerCreateInput, SellerUpdatePayload } from '~/types/Seller'
 
 export const useSellers = () => {

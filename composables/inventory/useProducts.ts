@@ -3,7 +3,7 @@ import type {
   CreateProductPayload,
   UpdateProductPayload,
 } from '~/types/Product'
-import { getCurrentUserWithToken } from '~/composables/getCurrentUser'
+import { getCurrentUserWithToken } from '~/composables/auth/getCurrentUser'
 
 export const useProducts = () => {
   const config = useRuntimeConfig()
