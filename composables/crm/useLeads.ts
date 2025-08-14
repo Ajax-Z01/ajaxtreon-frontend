@@ -47,7 +47,7 @@ export const useLeads = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Lead>(`${baseUrl}/leads/${id}`, {
+      const { data, error } = await useFetch<Lead>(`${baseUrl}/crm/lead/${id}`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -68,7 +68,7 @@ export const useLeads = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Lead[]>(`${baseUrl}/leads`, {
+      const { data, error } = await useFetch<Lead[]>(`${baseUrl}/crm/lead`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -88,7 +88,7 @@ export const useLeads = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Lead>(`${baseUrl}/leads`, {
+      const { data, error } = await useFetch<Lead>(`${baseUrl}/crm/lead`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -109,7 +109,7 @@ export const useLeads = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Lead>(`${baseUrl}/leads/${id}`, {
+      const { data, error } = await useFetch<Lead>(`${baseUrl}/crm/lead/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -130,7 +130,7 @@ export const useLeads = () => {
     try {
       await ensureToken()
 
-      const { error } = await useFetch(`${baseUrl}/leads/${id}`, {
+      const { error } = await useFetch(`${baseUrl}/crm/lead/${id}`, {
         method: 'DELETE',
         headers: getHeaders(),
       })

@@ -43,7 +43,7 @@ export const useCRMUsers = () => {
   // Public: get user by email (no auth)
   const getUserByEmail = async (email: string): Promise<CRMUser | null> => {
     try {
-      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/users/email/${email}`, {
+      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/crm/user/email/${email}`, {
         method: 'GET',
       })
 
@@ -63,7 +63,7 @@ export const useCRMUsers = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<CRMUser[]>(`${baseUrl}/users`, {
+      const { data, error } = await useFetch<CRMUser[]>(`${baseUrl}/crm/user`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -83,7 +83,7 @@ export const useCRMUsers = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/users/${id}`, {
+      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/crm/user/${id}`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -103,7 +103,7 @@ export const useCRMUsers = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/users`, {
+      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/crm/user`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -124,7 +124,7 @@ export const useCRMUsers = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/users/${id}`, {
+      const { data, error } = await useFetch<CRMUser>(`${baseUrl}/crm/user/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -145,7 +145,7 @@ export const useCRMUsers = () => {
     try {
       await ensureToken()
 
-      const { error } = await useFetch(`${baseUrl}/users/${id}`, {
+      const { error } = await useFetch(`${baseUrl}/crm/user/${id}`, {
         method: 'DELETE',
         headers: getHeaders(),
       })

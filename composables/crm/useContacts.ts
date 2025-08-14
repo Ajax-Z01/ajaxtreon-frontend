@@ -46,7 +46,7 @@ export const useContacts = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Contact[]>(`${baseUrl}/contacts`, {
+      const { data, error } = await useFetch<Contact[]>(`${baseUrl}/crm/contact`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -66,7 +66,7 @@ export const useContacts = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Contact>(`${baseUrl}/contacts/${id}`, {
+      const { data, error } = await useFetch<Contact>(`${baseUrl}/crm/contact/${id}`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -86,7 +86,7 @@ export const useContacts = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Contact>(`${baseUrl}/contacts`, {
+      const { data, error } = await useFetch<Contact>(`${baseUrl}/crm/contact`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -107,7 +107,7 @@ export const useContacts = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Contact>(`${baseUrl}/contacts/${id}`, {
+      const { data, error } = await useFetch<Contact>(`${baseUrl}/crm/contact/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -128,7 +128,7 @@ export const useContacts = () => {
     try {
       await ensureToken()
 
-      const { error } = await useFetch(`${baseUrl}/contacts/${id}`, {
+      const { error } = await useFetch(`${baseUrl}/crm/contact/${id}`, {
         method: 'DELETE',
         headers: getHeaders(),
       })
@@ -145,7 +145,7 @@ export const useContacts = () => {
   // Optional: get contacts by leadId (public route, no auth)
   const getContactsByLeadId = async (leadId: string): Promise<Contact[]> => {
     try {
-      const { data, error } = await useFetch<Contact[]>(`${baseUrl}/contacts/lead/${leadId}`, {
+      const { data, error } = await useFetch<Contact[]>(`${baseUrl}/crm/contact/lead/${leadId}`, {
         method: 'GET',
       })
 

@@ -105,6 +105,15 @@ const logoutUser = async () => {
           Go to Report Dashboard →
         </router-link>
       </div>
+      
+      <!-- CRM Dashboard Card -->
+      <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition flex flex-col justify-between">
+        <h2 class="text-xl font-semibold mb-4">CRM Dashboard</h2>
+        <p class="text-gray-500 mb-6 flex-grow">Manage leads, contacts, opportunities, and activities.</p>
+        <router-link to="dashboard/crm" class="text-blue-500 hover:text-blue-700 font-medium">
+          Go to CRM Dashboard →
+        </router-link>
+      </div>
     </div>
   </div>
 </template>

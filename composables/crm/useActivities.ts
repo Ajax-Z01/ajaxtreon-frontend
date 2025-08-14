@@ -46,7 +46,7 @@ export const useActivities = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Activity[]>(`${baseUrl}/activities`, {
+      const { data, error } = await useFetch<Activity[]>(`${baseUrl}/activity`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -66,7 +66,7 @@ export const useActivities = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Activity>(`${baseUrl}/activities/${id}`, {
+      const { data, error } = await useFetch<Activity>(`${baseUrl}/activity/${id}`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -90,7 +90,7 @@ export const useActivities = () => {
       await ensureToken()
 
       const { data, error } = await useFetch<Activity[]>(
-        `${baseUrl}/activities/related/${type}/${relatedId}`,
+        `${baseUrl}/activity/related/${type}/${relatedId}`,
         {
           method: 'GET',
           headers: getHeaders(),
@@ -112,7 +112,7 @@ export const useActivities = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Activity>(`${baseUrl}/activities`, {
+      const { data, error } = await useFetch<Activity>(`${baseUrl}/activity`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -133,7 +133,7 @@ export const useActivities = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Activity>(`${baseUrl}/activities/${id}`, {
+      const { data, error } = await useFetch<Activity>(`${baseUrl}/activity/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -154,7 +154,7 @@ export const useActivities = () => {
     try {
       await ensureToken()
 
-      const { error } = await useFetch(`${baseUrl}/activities/${id}`, {
+      const { error } = await useFetch(`${baseUrl}/activity/${id}`, {
         method: 'DELETE',
         headers: getHeaders(),
       })

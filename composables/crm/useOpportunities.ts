@@ -46,7 +46,7 @@ export const useOpportunities = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Opportunity[]>(`${baseUrl}/opportunities`, {
+      const { data, error } = await useFetch<Opportunity[]>(`${baseUrl}/crm/opportunity`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -66,7 +66,7 @@ export const useOpportunities = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Opportunity>(`${baseUrl}/opportunities/${id}`, {
+      const { data, error } = await useFetch<Opportunity>(`${baseUrl}/crm/opportunity/${id}`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -86,7 +86,7 @@ export const useOpportunities = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Opportunity>(`${baseUrl}/opportunities`, {
+      const { data, error } = await useFetch<Opportunity>(`${baseUrl}/crm/opportunity`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -107,7 +107,7 @@ export const useOpportunities = () => {
     try {
       await ensureToken()
 
-      const { data, error } = await useFetch<Opportunity>(`${baseUrl}/opportunities/${id}`, {
+      const { data, error } = await useFetch<Opportunity>(`${baseUrl}/crm/opportunity/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -128,7 +128,7 @@ export const useOpportunities = () => {
     try {
       await ensureToken()
 
-      const { error } = await useFetch(`${baseUrl}/opportunities/${id}`, {
+      const { error } = await useFetch(`${baseUrl}/crm/opportunity/${id}`, {
         method: 'DELETE',
         headers: getHeaders(),
       })

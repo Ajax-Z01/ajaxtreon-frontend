@@ -1,9 +1,11 @@
 export interface Contact {
   id: string
   leadId: string
-  name: string
+  firstName: string
+  lastName?: string
   email?: string
   phone?: string
+  company?: string
   position?: string
   createdAt: string
   updatedAt: string
@@ -11,16 +13,20 @@ export interface Contact {
 
 export interface ContactCreateInput {
   leadId: string
-  name: string
+  firstName: string
+  lastName?: string
   email?: string
   phone?: string
+  company?: string
   position?: string
 }
 
 export interface ContactUpdatePayload {
   leadId?: string
-  name?: string
+  firstName?: string
+  lastName?: string
   email?: string
   phone?: string
+  company?: string
   position?: string
 }
