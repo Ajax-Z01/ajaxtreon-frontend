@@ -1,64 +1,156 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import ModalCreateLead from '~/components/modal/CreateLead.vue'
+import ModalEditLead from '~/components/modal/EditLead.vue'
 import { useLeads } from '~/composables/crm/useLeads'
-import type { Lead } from '~/types/Lead'
+import { useToast } from '~/composables/utils/useToast'
+import type { Lead, LeadCreateInput, LeadUpdatePayload } from '~/types/Lead'
 
-const { getLeads } = useLeads()
 const leads = ref<Lead[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const selectedLead = ref<Lead | null>(null)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
 
-onMounted(async () => {
+const { getLeads, getLeadById, createLead, updateLead, deleteLead } = useLeads()
+const { addToast } = useToast()
+
+const loadLeads = async () => {
   try {
     leads.value = await getLeads()
-  } catch (err: any) {
-    error.value = err.message || 'Failed to load leads'
-  } finally {
-    loading.value = false
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to fetch leads', 'error')
   }
-})
+}
+
+onMounted(loadLeads)
+
+const handleCreateLead = async (leadData: LeadCreateInput) => {
+  try {
+    await createLead(leadData)
+    await loadLeads()
+    addToast('Lead created successfully', 'success')
+    showCreateModal.value = false
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to create lead', 'error')
+  }
+}
+
+const handleUpdateLead = async (id: string, updatedData: LeadUpdatePayload) => {
+  try {
+    await updateLead(id, updatedData)
+    await loadLeads()
+    addToast('Lead updated successfully', 'success')
+    showEditModal.value = false
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to update lead', 'error')
+  }
+}
+
+const fetchLeadById = async (id: string) => {
+  try {
+    selectedLead.value = await getLeadById(id)
+    showEditModal.value = true
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to load lead data', 'error')
+  }
+}
+
+const removeLead = async (id: string) => {
+  try {
+    await deleteLead(id)
+    leads.value = leads.value.filter(l => l.id !== id)
+    addToast('Lead deleted successfully', 'success')
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to delete lead', 'error')
+  }
+}
 </script>
 
 <template>
-  <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Leads</h1>
-    <p class="text-gray-500 mb-6">List of CRM leads with their details.</p>
+  <div class="p-8 bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <NuxtLink
+        to="/admin/dashboard/crm"
+        class="text-sm text-white bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition text-center md:text-left"
+      >
+        ← Back to Dashboard
+      </NuxtLink>
 
-    <div v-if="loading" class="text-gray-500">Loading leads...</div>
-    <div v-else-if="error" class="text-red-500">{{ error }}</div>
-    <div v-else>
-      <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-        <thead class="bg-gray-100">
+      <h1 class="text-2xl md:text-3xl font-bold text-center md:text-left">
+        Lead Management
+      </h1>
+
+      <button
+        @click="showCreateModal = true"
+        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition text-center"
+      >
+        + Add Lead
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white shadow rounded-lg overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
           <tr>
-            <th class="px-4 py-2 text-left">Name</th>
-            <th class="px-4 py-2 text-left">Email</th>
-            <th class="px-4 py-2 text-left">Phone</th>
-            <th class="px-4 py-2 text-left">Company</th>
-            <th class="px-4 py-2 text-left">Status</th>
-            <th class="px-4 py-2 text-left">Assigned To</th>
-            <th class="px-4 py-2 text-left">Last Contacted</th>
-            <th class="px-4 py-2 text-left">Created At</th>
-            <th class="px-4 py-2 text-left">Updated At</th>
+            <th class="px-4 py-3 text-left">Name</th>
+            <th class="px-4 py-3 text-left">Email</th>
+            <th class="px-4 py-3 text-left">Phone</th>
+            <th class="px-4 py-3 text-left">Company</th>
+            <th class="px-4 py-3 text-left">Status</th>
+            <th class="px-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="lead in leads" :key="lead.id" class="border-t">
-            <td class="px-4 py-2">{{ lead.name }}</td>
-            <td class="px-4 py-2">{{ lead.email || '-' }}</td>
-            <td class="px-4 py-2">{{ lead.phone || '-' }}</td>
-            <td class="px-4 py-2">{{ lead.company || '-' }}</td>
-            <td class="px-4 py-2 capitalize">{{ lead.status }}</td>
-            <td class="px-4 py-2">{{ lead.assignedTo || '-' }}</td>
-            <td class="px-4 py-2">{{ lead.lastContactedAt ? new Date(lead.lastContactedAt).toLocaleDateString() : '-' }}</td>
-            <td class="px-4 py-2">{{ new Date(lead.createdAt).toLocaleDateString() }}</td>
-            <td class="px-4 py-2">{{ new Date(lead.updatedAt).toLocaleDateString() }}</td>
+        <tbody class="divide-y divide-gray-100">
+          <tr
+            v-for="lead in leads"
+            :key="lead.id"
+            class="hover:bg-gray-50 text-sm"
+          >
+            <td class="px-4 py-3 font-medium whitespace-nowrap">{{ lead.name }}</td>
+            <td class="px-4 py-3">{{ lead.email || '-' }}</td>
+            <td class="px-4 py-3">{{ lead.phone || '-' }}</td>
+            <td class="px-4 py-3">{{ lead.company || '-' }}</td>
+            <td class="px-4 py-3 capitalize">{{ lead.status }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <div class="flex gap-3">
+                <button
+                  @click="fetchLeadById(lead.id)"
+                  class="text-blue-600 hover:underline"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="removeLead(lead.id)"
+                  class="text-red-600 hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
-
-      <div v-if="leads.length === 0" class="text-gray-500 mt-4">
-        No leads found.
-      </div>
     </div>
+
+    <!-- Modals -->
+    <ModalCreateLead
+      :showModal="showCreateModal"
+      @closeModal="showCreateModal = false"
+      @createLead="handleCreateLead"
+    />
+
+    <ModalEditLead
+      :showModal="showEditModal"
+      :selectedLead="selectedLead"
+      @closeModal="showEditModal = false"
+      @updateLead="(data) => selectedLead && handleUpdateLead(selectedLead.id, data)"
+    />
   </div>
 </template>

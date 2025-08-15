@@ -1,60 +1,156 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import ModalCreateOpportunity from '~/components/modal/CreateOpportunity.vue'
+import ModalEditOpportunity from '~/components/modal/EditOpportunity.vue'
 import { useOpportunities } from '~/composables/crm/useOpportunities'
-import type { Opportunity } from '~/types/Opportunity'
+import { useToast } from '~/composables/utils/useToast'
+import type { Opportunity, OpportunityCreateInput, OpportunityUpdatePayload } from '~/types/Opportunity'
 
-const { getOpportunities } = useOpportunities()
 const opportunities = ref<Opportunity[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const selectedOpportunity = ref<Opportunity | null>(null)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
 
-onMounted(async () => {
+const { getOpportunities, getOpportunityById, createOpportunity, updateOpportunity, deleteOpportunity } = useOpportunities()
+const { addToast } = useToast()
+
+const loadOpportunities = async () => {
   try {
     opportunities.value = await getOpportunities()
-  } catch (err: any) {
-    error.value = err.message || 'Failed to load opportunities'
-  } finally {
-    loading.value = false
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to fetch opportunities', 'error')
   }
-})
+}
+
+onMounted(loadOpportunities)
+
+const handleCreateOpportunity = async (data: OpportunityCreateInput) => {
+  try {
+    await createOpportunity(data)
+    await loadOpportunities()
+    addToast('Opportunity created successfully', 'success')
+    showCreateModal.value = false
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to create opportunity', 'error')
+  }
+}
+
+const handleUpdateOpportunity = async (id: string, data: OpportunityUpdatePayload) => {
+  try {
+    await updateOpportunity(id, data)
+    await loadOpportunities()
+    addToast('Opportunity updated successfully', 'success')
+    showEditModal.value = false
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to update opportunity', 'error')
+  }
+}
+
+const fetchOpportunityById = async (id: string) => {
+  try {
+    selectedOpportunity.value = await getOpportunityById(id)
+    showEditModal.value = true
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to load opportunity data', 'error')
+  }
+}
+
+const removeOpportunity = async (id: string) => {
+  try {
+    await deleteOpportunity(id)
+    opportunities.value = opportunities.value.filter(o => o.id !== id)
+    addToast('Opportunity deleted successfully', 'success')
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to delete opportunity', 'error')
+  }
+}
 </script>
 
 <template>
-  <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Opportunities</h1>
-    <p class="text-gray-500 mb-6">List of CRM opportunities with details.</p>
+  <div class="p-8 bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <NuxtLink
+        to="/admin/dashboard/crm"
+        class="text-sm text-white bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition text-center md:text-left"
+      >
+        ← Back to Dashboard
+      </NuxtLink>
 
-    <div v-if="loading" class="text-gray-500">Loading opportunities...</div>
-    <div v-else-if="error" class="text-red-500">{{ error }}</div>
-    <div v-else>
-      <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-        <thead class="bg-gray-100">
+      <h1 class="text-2xl md:text-3xl font-bold text-center md:text-left">
+        Opportunity Management
+      </h1>
+
+      <button
+        @click="showCreateModal = true"
+        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition text-center"
+      >
+        + Add Opportunity
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white shadow rounded-lg overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
           <tr>
-            <th class="px-4 py-2 text-left">Title</th>
-            <th class="px-4 py-2 text-left">Lead ID</th>
-            <th class="px-4 py-2 text-left">Value</th>
-            <th class="px-4 py-2 text-left">Status</th>
-            <th class="px-4 py-2 text-left">Close Date</th>
-            <th class="px-4 py-2 text-left">Created At</th>
-            <th class="px-4 py-2 text-left">Updated At</th>
+            <th class="px-4 py-3 text-left">Title</th>
+            <th class="px-4 py-3 text-left">Lead ID</th>
+            <th class="px-4 py-3 text-left">Value</th>
+            <th class="px-4 py-3 text-left">Status</th>
+            <th class="px-4 py-3 text-left">Close Date</th>
+            <th class="px-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="opp in opportunities" :key="opp.id" class="border-t">
-            <td class="px-4 py-2">{{ opp.title }}</td>
-            <td class="px-4 py-2">{{ opp.leadId }}</td>
-            <td class="px-4 py-2">{{ opp.value.toLocaleString() }}</td>
-            <td class="px-4 py-2 capitalize">{{ opp.status }}</td>
-            <td class="px-4 py-2">{{ opp.closeDate ? new Date(opp.closeDate).toLocaleDateString() : '-' }}</td>
-            <td class="px-4 py-2">{{ new Date(opp.createdAt).toLocaleDateString() }}</td>
-            <td class="px-4 py-2">{{ new Date(opp.updatedAt).toLocaleDateString() }}</td>
+        <tbody class="divide-y divide-gray-100">
+          <tr
+            v-for="opportunity in opportunities"
+            :key="opportunity.id"
+            class="hover:bg-gray-50 text-sm"
+          >
+            <td class="px-4 py-3 font-medium whitespace-nowrap">{{ opportunity.title }}</td>
+            <td class="px-4 py-3">{{ opportunity.leadId }}</td>
+            <td class="px-4 py-3">${{ opportunity.value.toLocaleString() }}</td>
+            <td class="px-4 py-3 capitalize">{{ opportunity.status }}</td>
+            <td class="px-4 py-3">{{ opportunity.closeDate || '-' }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <div class="flex gap-3">
+                <button
+                  @click="fetchOpportunityById(opportunity.id)"
+                  class="text-blue-600 hover:underline"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="removeOpportunity(opportunity.id)"
+                  class="text-red-600 hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
-
-      <div v-if="opportunities.length === 0" class="text-gray-500 mt-4">
-        No opportunities found.
-      </div>
     </div>
+
+    <!-- Modals -->
+    <ModalCreateOpportunity
+      :showModal="showCreateModal"
+      @closeModal="showCreateModal = false"
+      @createOpportunity="handleCreateOpportunity"
+    />
+
+    <ModalEditOpportunity
+      :showModal="showEditModal"
+      :selectedOpportunity="selectedOpportunity"
+      @closeModal="showEditModal = false"
+      @updateOpportunity="(data) => selectedOpportunity && handleUpdateOpportunity(selectedOpportunity.id, data)"
+    />
   </div>
 </template>

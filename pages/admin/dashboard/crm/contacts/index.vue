@@ -1,68 +1,158 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import ModalCreateContact from '~/components/modal/CreateContact.vue'
+import ModalEditContact from '~/components/modal/EditContact.vue'
 import { useContacts } from '~/composables/crm/useContacts'
-import type { Contact } from '~/types/Contact'
+import { useToast } from '~/composables/utils/useToast'
+import type { Contact, ContactCreateInput, ContactUpdatePayload } from '~/types/Contact'
 
-const { getContacts } = useContacts()
 const contacts = ref<Contact[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const selectedContact = ref<Contact | null>(null)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
 
-onMounted(async () => {
+const { getContacts, getContactById, createContact, updateContact, deleteContact } = useContacts()
+const { addToast } = useToast()
+
+const loadContacts = async () => {
   try {
     contacts.value = await getContacts()
-  } catch (err: any) {
-    error.value = err.message || 'Failed to load contacts'
-  } finally {
-    loading.value = false
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to fetch contacts', 'error')
   }
-})
+}
+
+onMounted(loadContacts)
+
+const handleCreateContact = async (contactData: ContactCreateInput) => {
+  try {
+    await createContact(contactData)
+    await loadContacts()
+    addToast('Contact created successfully', 'success')
+    showCreateModal.value = false
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to create contact', 'error')
+  }
+}
+
+const handleUpdateContact = async (id: string, updatedData: ContactUpdatePayload) => {
+  try {
+    await updateContact(id, updatedData)
+    await loadContacts()
+    addToast('Contact updated successfully', 'success')
+    showEditModal.value = false
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to update contact', 'error')
+  }
+}
+
+const fetchContactById = async (id: string) => {
+  try {
+    selectedContact.value = await getContactById(id)
+    showEditModal.value = true
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to load contact data', 'error')
+  }
+}
+
+const removeContact = async (id: string) => {
+  try {
+    await deleteContact(id)
+    contacts.value = contacts.value.filter(c => c.id !== id)
+    addToast('Contact deleted successfully', 'success')
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to delete contact', 'error')
+  }
+}
 </script>
 
 <template>
-  <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Contacts</h1>
-    <p class="text-gray-500 mb-6">List of CRM contacts with their details.</p>
+  <div class="p-8 bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <NuxtLink
+        to="/admin/dashboard/crm"
+        class="text-sm text-white bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition text-center md:text-left"
+      >
+        ← Back to Dashboard
+      </NuxtLink>
 
-    <!-- Loading -->
-    <div v-if="loading" class="text-gray-500 animate-pulse">Loading contacts...</div>
+      <h1 class="text-2xl md:text-3xl font-bold text-center md:text-left">
+        Contact Management
+      </h1>
 
-    <!-- Error -->
-    <div v-else-if="error" class="text-red-500">{{ error }}</div>
+      <button
+        @click="showCreateModal = true"
+        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition text-center"
+      >
+        + Add Contact
+      </button>
+    </div>
 
-    <!-- Data Table -->
-    <div v-else>
-      <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-        <thead class="bg-gray-100">
+    <!-- Table -->
+    <div class="bg-white shadow rounded-lg overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
           <tr>
-            <th class="px-4 py-2 text-left">Name</th>
-            <th class="px-4 py-2 text-left">Email</th>
-            <th class="px-4 py-2 text-left">Phone</th>
-            <th class="px-4 py-2 text-left">Company</th>
-            <th class="px-4 py-2 text-left">Position</th>
+            <th class="px-4 py-3 text-left">Name</th>
+            <th class="px-4 py-3 text-left">Email</th>
+            <th class="px-4 py-3 text-left">Phone</th>
+            <th class="px-4 py-3 text-left">Company</th>
+            <th class="px-4 py-3 text-left">Position</th>
+            <th class="px-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-gray-100">
           <tr
             v-for="contact in contacts"
             :key="contact.id"
-            class="border-t hover:bg-gray-50 transition"
+            class="hover:bg-gray-50 text-sm"
           >
-            <td class="px-4 py-2">
+            <td class="px-4 py-3 font-medium whitespace-nowrap">
               {{ contact.firstName }} {{ contact.lastName || '' }}
             </td>
-            <td class="px-4 py-2">{{ contact.email || '-' }}</td>
-            <td class="px-4 py-2">{{ contact.phone || '-' }}</td>
-            <td class="px-4 py-2">{{ contact.company || '-' }}</td>
-            <td class="px-4 py-2">{{ contact.position || '-' }}</td>
+            <td class="px-4 py-3">{{ contact.email || '-' }}</td>
+            <td class="px-4 py-3">{{ contact.phone || '-' }}</td>
+            <td class="px-4 py-3">{{ contact.company || '-' }}</td>
+            <td class="px-4 py-3">{{ contact.position || '-' }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <div class="flex gap-3">
+                <button
+                  @click="fetchContactById(contact.id)"
+                  class="text-blue-600 hover:underline"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="removeContact(contact.id)"
+                  class="text-red-600 hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
-
-      <!-- Empty State -->
-      <div v-if="contacts.length === 0" class="text-gray-500 mt-4">
-        No contacts found.
-      </div>
     </div>
+
+    <!-- Modals -->
+    <ModalCreateContact
+      :showModal="showCreateModal"
+      @closeModal="showCreateModal = false"
+      @createContact="handleCreateContact"
+    />
+
+    <ModalEditContact
+      :showModal="showEditModal"
+      :selectedContact="selectedContact"
+      @closeModal="showEditModal = false"
+      @updateContact="(data) => selectedContact && handleUpdateContact(selectedContact.id, data)"
+    />
   </div>
 </template>
