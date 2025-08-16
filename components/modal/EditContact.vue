@@ -6,6 +6,7 @@ import type { ContactUpdatePayload } from '~/types/Contact'
 const props = defineProps<{
   showModal: boolean
   selectedContact: (ContactUpdatePayload & { id: string }) | null
+  leads: { id: string; name: string; company?: string }[]
 }>()
 
 const emit = defineEmits<{
@@ -87,16 +88,16 @@ const closeModal = () => {
 
       <!-- Form -->
       <form @submit.prevent="updateContact" class="space-y-4">
-        <!-- Lead ID -->
+        <!-- Lead (read-only) -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Lead ID *</label>
-          <input
-            v-model="form.leadId"
-            type="text"
-            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
-            required
-          />
-          <p v-if="errors.leadId" class="text-sm text-red-600 mt-1">{{ errors.leadId }}</p>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Lead</label>
+          <p class="px-3 py-2 border rounded-lg bg-gray-100">
+            {{
+              props.leads.find(l => l.id === form.leadId)?.name
+                ? `${props.leads.find(l => l.id === form.leadId)!.name} - ${props.leads.find(l => l.id === form.leadId)!.company || 'No Company'}`
+                : 'Unknown Lead'
+            }}
+          </p>
         </div>
 
         <!-- First Name -->

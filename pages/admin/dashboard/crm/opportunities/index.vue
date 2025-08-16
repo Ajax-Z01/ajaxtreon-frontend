@@ -3,17 +3,32 @@ import { ref, onMounted } from 'vue'
 import ModalCreateOpportunity from '~/components/modal/CreateOpportunity.vue'
 import ModalEditOpportunity from '~/components/modal/EditOpportunity.vue'
 import { useOpportunities } from '~/composables/crm/useOpportunities'
+import { useLeads } from '~/composables/crm/useLeads'
 import { useToast } from '~/composables/utils/useToast'
 import type { Opportunity, OpportunityCreateInput, OpportunityUpdatePayload } from '~/types/Opportunity'
+import type { Lead } from '~/types/Lead'
 
 const opportunities = ref<Opportunity[]>([])
+const leads = ref<Lead[]>([])
 const selectedOpportunity = ref<Opportunity | null>(null)
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 
 const { getOpportunities, getOpportunityById, createOpportunity, updateOpportunity, deleteOpportunity } = useOpportunities()
+const { getLeads } = useLeads()
 const { addToast } = useToast()
 
+// Load all leads
+const loadLeads = async () => {
+  try {
+    leads.value = await getLeads()
+  } catch (error) {
+    console.error(error)
+    addToast('Failed to fetch leads', 'error')
+  }
+}
+
+// Load opportunities
 const loadOpportunities = async () => {
   try {
     opportunities.value = await getOpportunities()
@@ -23,7 +38,16 @@ const loadOpportunities = async () => {
   }
 }
 
-onMounted(loadOpportunities)
+// Get Lead Label from leadId
+const getLeadLabel = (leadId: string) => {
+  const lead = leads.value.find(l => l.id === leadId)
+  return lead ? `${lead.name} - ${lead.company || 'No Company'}` : 'Unknown Lead'
+}
+
+onMounted(async () => {
+  await loadLeads()
+  await loadOpportunities()
+})
 
 const handleCreateOpportunity = async (data: OpportunityCreateInput) => {
   try {
@@ -100,7 +124,7 @@ const removeOpportunity = async (id: string) => {
         <thead class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
           <tr>
             <th class="px-4 py-3 text-left">Title</th>
-            <th class="px-4 py-3 text-left">Lead ID</th>
+            <th class="px-4 py-3 text-left">Lead</th>
             <th class="px-4 py-3 text-left">Value</th>
             <th class="px-4 py-3 text-left">Status</th>
             <th class="px-4 py-3 text-left">Close Date</th>
@@ -114,7 +138,7 @@ const removeOpportunity = async (id: string) => {
             class="hover:bg-gray-50 text-sm"
           >
             <td class="px-4 py-3 font-medium whitespace-nowrap">{{ opportunity.title }}</td>
-            <td class="px-4 py-3">{{ opportunity.leadId }}</td>
+            <td class="px-4 py-3">{{ getLeadLabel(opportunity.leadId) }}</td>
             <td class="px-4 py-3">${{ opportunity.value.toLocaleString() }}</td>
             <td class="px-4 py-3 capitalize">{{ opportunity.status }}</td>
             <td class="px-4 py-3">{{ opportunity.closeDate || '-' }}</td>
@@ -142,6 +166,7 @@ const removeOpportunity = async (id: string) => {
     <!-- Modals -->
     <ModalCreateOpportunity
       :showModal="showCreateModal"
+      :leads="leads"
       @closeModal="showCreateModal = false"
       @createOpportunity="handleCreateOpportunity"
     />
@@ -149,6 +174,7 @@ const removeOpportunity = async (id: string) => {
     <ModalEditOpportunity
       :showModal="showEditModal"
       :selectedOpportunity="selectedOpportunity"
+      :leads="leads"
       @closeModal="showEditModal = false"
       @updateOpportunity="(data) => selectedOpportunity && handleUpdateOpportunity(selectedOpportunity.id, data)"
     />

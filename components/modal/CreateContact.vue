@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, onMounted } from 'vue'
 import { X, PlusCircle } from 'lucide-vue-next'
 import type { ContactCreateInput } from '~/types/Contact'
+import type { Lead } from '~/types/Lead'
+import { useLeads } from '~/composables/crm/useLeads'
 
 const props = defineProps<{
   showModal: boolean
@@ -23,8 +25,10 @@ const form = ref<ContactCreateInput>({
 })
 
 const errors = ref<Record<string, string>>({})
+const leads = ref<Lead[]>([])
+const { getLeads } = useLeads()
 
-watchEffect(() => {
+watchEffect(async () => {
   if (props.showModal) {
     form.value = {
       leadId: '',
@@ -36,6 +40,12 @@ watchEffect(() => {
       position: ''
     }
     errors.value = {}
+
+    try {
+      leads.value = await getLeads()
+    } catch (err) {
+      console.error('Gagal memuat leads', err)
+    }
   }
 })
 
@@ -60,19 +70,10 @@ const closeModal = () => {
 </script>
 
 <template>
-  <div
-    v-if="props.showModal"
-    class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
-  >
-    <div
-      class="bg-white p-6 md:p-8 rounded-xl shadow-xl w-full max-w-2xl relative border border-gray-200"
-    >
+  <div v-if="props.showModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div class="bg-white p-6 md:p-8 rounded-xl shadow-xl w-full max-w-2xl relative border border-gray-200">
       <!-- Close Button -->
-      <button
-        @click="closeModal"
-        class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition"
-        aria-label="Close"
-      >
+      <button @click="closeModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition" aria-label="Close">
         <X class="w-5 h-5" />
       </button>
 
@@ -95,9 +96,7 @@ const closeModal = () => {
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="John"
           />
-          <p v-if="errors.firstName" class="text-sm text-red-600 mt-1">
-            {{ errors.firstName }}
-          </p>
+          <p v-if="errors.firstName" class="text-sm text-red-600 mt-1">{{ errors.firstName }}</p>
         </div>
 
         <!-- Last Name -->
@@ -155,20 +154,21 @@ const closeModal = () => {
           />
         </div>
 
-        <!-- Lead ID -->
+        <!-- Lead ID (Dropdown) -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            Lead ID <span class="text-red-500">*</span>
+            Lead <span class="text-red-500">*</span>
           </label>
-          <input
+          <select
             v-model="form.leadId"
-            type="text"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="leadId123"
-          />
-          <p v-if="errors.leadId" class="text-sm text-red-600 mt-1">
-            {{ errors.leadId }}
-          </p>
+          >
+            <option value="">-- Pilih Lead --</option>
+            <option v-for="lead in leads" :key="lead.id" :value="lead.id">
+              {{ lead.name }} - {{ lead.company }}
+            </option>
+          </select>
+          <p v-if="errors.leadId" class="text-sm text-red-600 mt-1">{{ errors.leadId }}</p>
         </div>
 
         <!-- Submit -->

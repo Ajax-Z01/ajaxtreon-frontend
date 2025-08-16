@@ -2,12 +2,14 @@
 import { ref, watchEffect } from 'vue'
 import { X, FileEdit } from 'lucide-vue-next'
 import type { Opportunity, OpportunityUpdatePayload, OpportunityStatus } from '~/types/Opportunity'
+import type { Lead } from '~/types/Lead'
 
 const opportunityStatuses: OpportunityStatus[] = ['open', 'won', 'lost']
 
 const props = defineProps<{
   showModal: boolean
   selectedOpportunity: Opportunity | null
+  leads: Lead[]
 }>()
 
 const emit = defineEmits<{
@@ -25,6 +27,7 @@ const form = ref<OpportunityUpdatePayload>({
 
 const errors = ref<Record<string, string>>({})
 
+// Watch for selectedOpportunity changes
 watchEffect(() => {
   if (props.selectedOpportunity) {
     form.value = {
@@ -38,11 +41,16 @@ watchEffect(() => {
   }
 })
 
+// Helper: get display label for leadId
+const getLeadLabel = (leadId: string) => {
+  const lead = props.leads.find(l => l.id === leadId)
+  return lead ? `${lead.name} - ${lead.company || 'No Company'}` : 'Unknown Lead'
+}
+
 const updateOpportunityData = () => {
   if (!props.selectedOpportunity) return
   errors.value = {}
 
-  if (!form.value.leadId?.trim()) errors.value.leadId = 'Lead ID is required'
   if (!form.value.title?.trim()) errors.value.title = 'Title is required'
   if ((form.value.value ?? 0) <= 0) errors.value.value = 'Value must be greater than 0'
 
@@ -66,10 +74,12 @@ const closeModal = () => emit('closeModal')
       </div>
 
       <form @submit.prevent="updateOpportunityData" class="space-y-4">
+        <!-- Lead Info (read-only) -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Lead ID *</label>
-          <input v-model="form.leadId" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-          <p v-if="errors.leadId" class="text-sm text-red-600 mt-1">{{ errors.leadId }}</p>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Lead</label>
+          <p class="px-3 py-2 border rounded-lg bg-gray-100">
+            {{ getLeadLabel(form.leadId!) }}
+          </p>
         </div>
 
         <div>

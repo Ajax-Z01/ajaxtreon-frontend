@@ -3,48 +3,62 @@ import { ref, onMounted } from 'vue'
 import ModalCreateContact from '~/components/modal/CreateContact.vue'
 import ModalEditContact from '~/components/modal/EditContact.vue'
 import { useContacts } from '~/composables/crm/useContacts'
+import { useLeads } from '~/composables/crm/useLeads'
 import { useToast } from '~/composables/utils/useToast'
 import type { Contact, ContactCreateInput, ContactUpdatePayload } from '~/types/Contact'
+import type { Lead } from '~/types/Lead'
 
+// State
 const contacts = ref<Contact[]>([])
+const leads = ref<Lead[]>([])
 const selectedContact = ref<Contact | null>(null)
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 
+// Composables
 const { getContacts, getContactById, createContact, updateContact, deleteContact } = useContacts()
+const { getLeads } = useLeads()
 const { addToast } = useToast()
 
+// Load contacts
 const loadContacts = async () => {
   try {
     contacts.value = await getContacts()
-  } catch (error) {
-    console.error(error)
+  } catch {
     addToast('Failed to fetch contacts', 'error')
   }
 }
 
-onMounted(loadContacts)
-
-const handleCreateContact = async (contactData: ContactCreateInput) => {
+const loadLeads = async () => {
   try {
-    await createContact(contactData)
+    leads.value = await getLeads()
+  } catch (error) {
+    addToast('Failed to fetch leads', 'error')
+  }
+}
+
+onMounted(loadContacts)
+onMounted(loadLeads)
+
+// Handlers
+const handleCreateContact = async (data: ContactCreateInput) => {
+  try {
+    await createContact(data)
     await loadContacts()
     addToast('Contact created successfully', 'success')
     showCreateModal.value = false
-  } catch (error) {
-    console.error(error)
+  } catch {
     addToast('Failed to create contact', 'error')
   }
 }
 
-const handleUpdateContact = async (id: string, updatedData: ContactUpdatePayload) => {
+const handleUpdateContact = async (id: string, data: ContactUpdatePayload) => {
   try {
-    await updateContact(id, updatedData)
+    await updateContact(id, data)
     await loadContacts()
     addToast('Contact updated successfully', 'success')
     showEditModal.value = false
-  } catch (error) {
-    console.error(error)
+  } catch {
     addToast('Failed to update contact', 'error')
   }
 }
@@ -53,8 +67,7 @@ const fetchContactById = async (id: string) => {
   try {
     selectedContact.value = await getContactById(id)
     showEditModal.value = true
-  } catch (error) {
-    console.error(error)
+  } catch {
     addToast('Failed to load contact data', 'error')
   }
 }
@@ -64,8 +77,7 @@ const removeContact = async (id: string) => {
     await deleteContact(id)
     contacts.value = contacts.value.filter(c => c.id !== id)
     addToast('Contact deleted successfully', 'success')
-  } catch (error) {
-    console.error(error)
+  } catch {
     addToast('Failed to delete contact', 'error')
   }
 }
@@ -108,32 +120,16 @@ const removeContact = async (id: string) => {
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          <tr
-            v-for="contact in contacts"
-            :key="contact.id"
-            class="hover:bg-gray-50 text-sm"
-          >
-            <td class="px-4 py-3 font-medium whitespace-nowrap">
-              {{ contact.firstName }} {{ contact.lastName || '' }}
-            </td>
+          <tr v-for="contact in contacts" :key="contact.id" class="hover:bg-gray-50 text-sm">
+            <td class="px-4 py-3 font-medium whitespace-nowrap">{{ contact.firstName }} {{ contact.lastName || '' }}</td>
             <td class="px-4 py-3">{{ contact.email || '-' }}</td>
             <td class="px-4 py-3">{{ contact.phone || '-' }}</td>
             <td class="px-4 py-3">{{ contact.company || '-' }}</td>
             <td class="px-4 py-3">{{ contact.position || '-' }}</td>
             <td class="px-4 py-3 whitespace-nowrap">
               <div class="flex gap-3">
-                <button
-                  @click="fetchContactById(contact.id)"
-                  class="text-blue-600 hover:underline"
-                >
-                  Edit
-                </button>
-                <button
-                  @click="removeContact(contact.id)"
-                  class="text-red-600 hover:underline"
-                >
-                  Delete
-                </button>
+                <button @click="fetchContactById(contact.id)" class="text-blue-600 hover:underline">Edit</button>
+                <button @click="removeContact(contact.id)" class="text-red-600 hover:underline">Delete</button>
               </div>
             </td>
           </tr>
@@ -151,6 +147,7 @@ const removeContact = async (id: string) => {
     <ModalEditContact
       :showModal="showEditModal"
       :selectedContact="selectedContact"
+      :leads="leads"
       @closeModal="showEditModal = false"
       @updateContact="(data) => selectedContact && handleUpdateContact(selectedContact.id, data)"
     />

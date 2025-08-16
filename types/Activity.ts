@@ -1,5 +1,3 @@
-// types/Activity.ts
-
 export type ActivityType =
   | 'call'
   | 'meeting'
@@ -54,4 +52,9 @@ export interface ActivityUpdatePayload {
   assignedTo?: string
   dueDate?: string
   completedAt?: string
+}
+
+export type ActivityForEdit = Omit<Activity, 'relatedTo' | 'assignedTo'> & {
+  relatedTo: { type: 'lead' | 'contact' | 'opportunity'; name: string }
+  assignedTo?: string
 }

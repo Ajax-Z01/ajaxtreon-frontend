@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuth } from '~/composables/auth/useAuth'
+import { ArrowLeft } from 'lucide-vue-next'
 
 const router = useRouter()
 const { logout } = useAuth()
@@ -9,35 +10,19 @@ const logoutUser = async () => {
   await logout()
   router.push('/auth/login')
 }
-
-const crmCards = [
-  {
-    title: 'Activities',
-    description: 'Track meetings, calls, and follow-ups.',
-    to: '/admin/dashboard/crm/activities'
-  },
-  {
-    title: 'Contacts',
-    description: 'Manage customer and partner information.',
-    to: '/admin/dashboard/crm/contacts'
-  },
-  {
-    title: 'Leads',
-    description: 'Monitor potential clients and prospects.',
-    to: '/admin/dashboard/crm/leads'
-  },
-  {
-    title: 'Opportunities',
-    description: 'Track sales opportunities and deals.',
-    to: '/admin/dashboard/crm/opportunities'
-  }
-]
 </script>
 
 <template>
   <div class="p-4 sm:p-8 bg-gray-100 min-h-screen">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row items-center justify-between flex-wrap mb-6 gap-4">
+      <!-- Back Button -->
+      <NuxtLink
+        to="/admin/dashboard"
+        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition"
+      >
+        <ArrowLeft class="w-4 h-4" /> Back to Main Dashboard
+      </NuxtLink>
       <h1 class="text-2xl sm:text-3xl font-bold">CRM Dashboard</h1>
       <button
         @click="logoutUser"

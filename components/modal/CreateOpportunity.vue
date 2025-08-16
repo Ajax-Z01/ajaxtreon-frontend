@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { ref, onMounted, watchEffect } from 'vue'
 import { X, PlusCircle } from 'lucide-vue-next'
 import type { OpportunityCreateInput, OpportunityStatus } from '~/types/Opportunity'
+import type { Lead } from '~/types/Lead'
+import { useLeads } from '~/composables/crm/useLeads'
 
 const opportunityStatuses: OpportunityStatus[] = ['open', 'won', 'lost']
 
@@ -20,11 +22,19 @@ const form = ref<OpportunityCreateInput>({
 })
 
 const errors = ref<Record<string, string>>({})
+const leads = ref<Lead[]>([])
+const { getLeads } = useLeads()
 
-watchEffect(() => {
+// Fetch leads when modal opens
+watchEffect(async () => {
   if (props.showModal) {
     form.value = { leadId: '', title: '', value: 0, status: 'open', closeDate: '' }
     errors.value = {}
+    try {
+      leads.value = await getLeads()
+    } catch (err) {
+      console.error('Failed to fetch leads:', err)
+    }
   }
 })
 
@@ -54,24 +64,33 @@ const closeModal = () => emit('closeModal')
       </div>
 
       <form @submit.prevent="createNewOpportunity" class="space-y-4">
+        <!-- Lead select -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Lead ID *</label>
-          <input v-model="form.leadId" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Lead *</label>
+          <select v-model="form.leadId" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <option value="" disabled>Select lead</option>
+            <option v-for="lead in leads" :key="lead.id" :value="lead.id">
+              {{ lead.name }} - {{ lead.company || 'No Company' }}
+            </option>
+          </select>
           <p v-if="errors.leadId" class="text-sm text-red-600 mt-1">{{ errors.leadId }}</p>
         </div>
 
+        <!-- Title -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
           <input v-model="form.title" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
           <p v-if="errors.title" class="text-sm text-red-600 mt-1">{{ errors.title }}</p>
         </div>
 
+        <!-- Value -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Value *</label>
           <input v-model.number="form.value" type="number" min="0" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
           <p v-if="errors.value" class="text-sm text-red-600 mt-1">{{ errors.value }}</p>
         </div>
 
+        <!-- Status -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
           <select v-model="form.status" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
@@ -79,6 +98,7 @@ const closeModal = () => emit('closeModal')
           </select>
         </div>
 
+        <!-- Close Date -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Close Date</label>
           <input v-model="form.closeDate" type="date" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
